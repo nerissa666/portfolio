@@ -3,7 +3,8 @@ const nextConfig = {
   experimental: {
     dynamicIO: true,
     ppr: true,
-    newDevOverlay: true
+    newDevOverlay: true,
+    inlineCss: true
   }
 };
 
