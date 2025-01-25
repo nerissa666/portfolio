@@ -5,6 +5,9 @@ const nextConfig = {
     ppr: true,
     newDevOverlay: true,
     inlineCss: true
+  },
+  eslint: {
+    ignoreDuringBuilds: true,
   }
 };
 

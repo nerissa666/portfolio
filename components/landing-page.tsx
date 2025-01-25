@@ -1,5 +1,3 @@
-"use client";
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -10,6 +8,7 @@ import {
   Twitter,
   BookOpen,
   Code,
+  AppWindow,
 } from "lucide-react";
 import Link from "next/link";
 import { ReactNode } from "react";
@@ -168,6 +167,22 @@ export function LandingPage({ image }: { image: ReactNode }) {
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+          <div className="mt-8 pt-8 border-t border-zinc-800">
+            <h2 className="text-xl font-semibold text-white mb-4">
+              Personal Apps
+            </h2>
+            <div className="bg-zinc-800/50 p-4 rounded-lg">
+              <h3 className="text-md font-semibold text-white mb-2 flex items-center">
+                <AppWindow className="h-5 w-5 mr-2 text-green-400" />
+                <Link href="/dict" className="hover:underline">
+                  𝒻𝒶𝓈𝓉 Dictionary
+                </Link>
+              </h3>
+              <p className="text-sm text-zinc-300">
+                AI-powered dictionary with image generation
+              </p>
             </div>
           </div>
         </CardContent>
