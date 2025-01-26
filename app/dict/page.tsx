@@ -260,36 +260,34 @@ const GenerateImage = async ({
 }: {
   optimizedPrompt: string;
 }) => {
-  try {
-    const { image } = await generateImage({
-      model: openai.image("dall-e-2"),
-      prompt: optimizedPrompt,
-      size: "256x256",
-      abortSignal: AbortSignal.timeout(15000),
-    });
+  const { image } = await generateImage({
+    model: openai.image("dall-e-2"),
+    prompt: optimizedPrompt,
+    size: "256x256",
+    abortSignal: AbortSignal.timeout(15000),
+  });
 
-    return (
-      <img
-        src={`data:image/png;base64,${image.base64}`}
-        alt={optimizedPrompt}
-        className="mt-4 w-full h-[100%] aspect-square"
-      />
-    );
-  } catch (error) {
-    return (
-      <div className="w-full h-[100%] aspect-square bg-gray-100 flex items-center justify-center mt-4">
-        <div className="text-red-500">
-          Failed to generate image. Please try again.
-        </div>
-      </div>
-    );
-  }
+  return (
+    <img
+      src={`data:image/png;base64,${image.base64}`}
+      alt={optimizedPrompt}
+      className="mt-4 w-full h-[100%] aspect-square"
+    />
+  );
 };
 
 const RenderImage = async ({ query }: { query: string }) => {
   return (
-    <Suspense>
-      <MaybeGenerateImage query={query} />
-    </Suspense>
+    <ErrorBoundary
+      fallback={
+        <div className="w-full h-[100%] aspect-square bg-gray-100 flex items-center justify-center mt-4">
+          <div className="text-red-500">Failed to generate image.</div>
+        </div>
+      }
+    >
+      <Suspense>
+        <MaybeGenerateImage query={query} />
+      </Suspense>
+    </ErrorBoundary>
   );
 };
