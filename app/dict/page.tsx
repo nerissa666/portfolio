@@ -11,7 +11,6 @@ import { z } from "zod";
 import { cacheLife } from "next/dist/server/use-cache/cache-life";
 import Link from "next/link";
 import { ErrorBoundary } from "./error-boundary";
-import { Metadata } from "next";
 import { Pronounce } from "./pronounce";
 
 type ISearchParams = Promise<{
@@ -138,37 +137,42 @@ const RenderSearch = async ({ query }: { query: string }) => {
       messages: [
         {
           role: "system",
-          content: `Provide the Chinese translation and a brief definition. Keep it short and clear. For hard words in the definition, include their Chinese translation in brackets next to the word. Write each on two new lines. If the input is a sentence, output the sentence and its Chinese translation. If the sentence has a word marked with a star, provide its definition and translation as a separate line.
-          
-          Example 1:
-          Input: dictionary
-          Output:
-          字典
-          
-          A dictionary is a reference book that lists words in alphabetical order (字母顺序) and provides their meanings, pronunciations (发音), and other information.
+          content: `Task: Translate input to Chinese and provide definitions for marked terms.
+Format Rules:
 
-          Example 2:
-          Input: At least for now, few believe that Mr Trump’s long-professed desire for a weaker dollar, to boost American exports, has much chance of being realised.
-          Output:
-          At least for now, few believe that Mr Trump’s long-professed desire for a weaker dollar, to boost American exports, has much chance of being realised.
-          
-          至少目前，很少有人相信特朗普长期宣称的通过美元贬值来提振美国出口的愿望有很大机会实现。
+Single Words:
 
-          Example 3:
-          Input: The further our cause* advances
-          Output:
-          The further our cause advances
+Line 1: Chinese translation
 
-          我们的事业越向前推进
-          course (事业): A principle, goal, or movement that people support or are working toward.
+Line 2: English definition (with Chinese translations for complex terms in brackets)
 
-          Example 4:
-          Input: *not least* in the European Union
-          Output:
-          not least in the European Union
+Sentences:
 
-          在欧盟中，尤其重要。
-          not least (尤其重要): At least as important as anything else.
+Line 1: Original sentence
+
+Line 2: Chinese translation
+
+Subsequent lines: For starred terms, list:
+[English Term] ([Chinese]): [Definition]. [Hard word translations in brackets if needed]
+
+Examples:
+
+Input: dictionary
+Output:
+字典
+A reference book listing words with meanings, pronunciations (发音), and usage.
+
+Input: The further our cause* advances
+Output:
+The further our cause advances
+我们的事业越向前推进
+cause (事业): A goal or movement people support or work toward.
+
+Input: not least in the European Union
+Output:
+not least in the European Union
+在欧盟中尤其重要
+not least (尤其重要): At least as significant as other factors.
           `,
         },
         {
@@ -221,12 +225,12 @@ const MaybeGenerateImage = async ({ query }: { query: string }) => {
   cacheLife("max");
 
   const { object } = await generateObject({
-    model: openai("gpt-4o"),
+    model: openai("gpt-4o-mini"),
     schema: z.object({
       shouldGenerate: z.boolean(),
       optimizedPrompt: z.string().optional(),
     }),
-    prompt: `Determine if we should generate an image for the following query: ${query}. If so, create a prompt with concrete instructions. You're responsible for converting abstract words into concrete designs.`,
+    prompt: `Analyze "${query}". Should it be visualized? If yes, provide a concrete art prompt (MUST optimize the size of the input tokens to the image generationmodel). If no, just return false. Focus on visual elements, avoid abstract concepts. You can assume that the image model is bad at abstraction thinking.`,
   });
 
   if (!object.shouldGenerate || !object.optimizedPrompt) {
@@ -263,8 +267,7 @@ const GenerateImage = async ({
   const { image } = await generateImage({
     model: openai.image("dall-e-2"),
     prompt: optimizedPrompt,
-    size: "256x256",
-    abortSignal: AbortSignal.timeout(15000),
+    size: "512x512",
   });
 
   return (

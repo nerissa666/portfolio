@@ -4,7 +4,6 @@ const nextConfig = {
     dynamicIO: true,
     ppr: true,
     newDevOverlay: true,
-    inlineCss: true
   },
   eslint: {
     ignoreDuringBuilds: true,
