@@ -12,6 +12,7 @@ export default function Home() {
           width={128}
           height={128}
           className="rounded-full border-2 border-zinc-700"
+          loading="eager"
         />
       }
     />
