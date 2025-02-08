@@ -184,25 +184,22 @@ not least (尤其重要): At least as significant as other factors.
         </>
       }
     >
-      <RenderStream
-        reader={reader}
-        appendWhenDone={<FollowUp query={query} />}
-      />
+      <RenderStream reader={reader} query={query} />
     </Suspense>
   );
 };
 
 const RenderStream = async ({
   reader,
-  appendWhenDone,
+  query,
 }: {
   reader: ReadableStreamDefaultReader<string>;
-  appendWhenDone: React.ReactNode;
+  query: string;
 }) => {
   const { done, value } = await reader.read();
 
   if (done) {
-    return appendWhenDone;
+    return <FollowUp query={query} />;
   }
 
   return (
@@ -211,7 +208,7 @@ const RenderStream = async ({
         {value}
       </span>
       <Suspense fallback={ELIPSIS}>
-        <RenderStream reader={reader} appendWhenDone={appendWhenDone} />
+        <RenderStream reader={reader} query={query} />
       </Suspense>
     </>
   );
