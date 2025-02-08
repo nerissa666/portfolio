@@ -30,8 +30,13 @@ export default function Search({
         <h1 className="text-3xl sm:text-4xl font-serif text-gray-800 mb-6 sm:mb-8 text-center">
           <Link href={DICT_HOME}>𝒻𝒶𝓈𝓉 Dictionary</Link>
         </h1>
-        <SearchBar />
-        <QueryHistory />
+        <Suspense>
+          <SearchBar />
+        </Suspense>
+
+        <Suspense>
+          <QueryHistory />
+        </Suspense>
 
         <Suspense fallback={ELIPSIS}>
           <SearchHeader searchParams={searchParams} />
