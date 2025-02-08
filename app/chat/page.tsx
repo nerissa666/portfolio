@@ -5,6 +5,7 @@ export default function ChatPage() {
 }
 
 export const metadata = {
-  title: "𝒞𝒽𝒶𝓉 with Jude",
-  description: "Casual Chinese conversation partner powered by AI",
+  title: "𝐹𝒶𝓈𝓉 Chat",
+  description:
+    "AI chat interface that automatically selects the most suitable model based on your message",
 };

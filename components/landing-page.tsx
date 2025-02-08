@@ -187,11 +187,11 @@ export function LandingPage({ image }: { image: ReactNode }) {
               <h3 className="text-md font-semibold text-white mb-2 flex items-center">
                 <MessageSquare className="h-5 w-5 mr-2 text-blue-400" />
                 <Link href="/chat" className="hover:underline">
-                  𝒞𝒽𝒶𝓉
+                  𝐹𝒶𝓈𝓉 Chat
                 </Link>
               </h3>
               <p className="text-sm text-zinc-300">
-                Casual Chinese conversation partner powered by AI
+                AI chat that auto-selects the best model for your message
               </p>
             </div>
           </div>

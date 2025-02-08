@@ -1,30 +1,62 @@
 "use server";
 
 import { openai } from "@ai-sdk/openai";
-import { generateObject, streamText } from "ai";
+import { generateObject, generateText, streamText } from "ai";
 
-export async function* getChatResponse(messages: string[]) {
-  let model = openai("gpt-4o-mini");
+type Message = {
+  role: "system" | "user" | "assistant" | "data";
+  content: string;
+};
+
+type ChatMode =
+  | "deep reasoning"
+  | "some reasoning"
+  | "serious chat"
+  | "casual chat";
+
+const MODEL_MAP = {
+  "deep reasoning": "o1-mini",
+  "some reasoning": "gpt-4o",
+  "serious chat": "gpt-4-turbo",
+  "casual chat": "gpt-4o-mini",
+} as const;
+
+const getSystemPrompt = (language: "zh" | "en"): string =>
+  language === "zh"
+    ? "You must speak Chinese. Be informal & concise."
+    : "You must speak English. Be informal & concise.";
+
+const selectModelAndMode = async (
+  message: string
+): Promise<[string, ChatMode]> => {
+  const wordCount = message.trim().split(/\s+/).length;
+
+  if (wordCount < 3) {
+    return ["gpt-4o-mini", "casual chat"];
+  }
+
   try {
-    const { object } = await generateObject({
-      model: openai("gpt-4o-mini"),
-      prompt:
-        "Decide which model should be used to based on the message: " +
-        messages[messages.length - 1],
+    const { object: mode } = await generateObject({
+      model: openai("gpt-4-turbo"),
+      prompt: `Decide which model should be used to based on the message: ${message}`,
       output: "enum",
-      enum: ["reasoning", "serious chat", "casual chat"],
+      enum: Object.keys(MODEL_MAP),
     });
 
-    const modelMap = {
-      reasoning: openai("o1-mini"),
-      "serious chat": openai("gpt-4o"),
-      "casual chat": openai("gpt-4o-mini"),
-    };
-    model = modelMap[object];
+    return [MODEL_MAP[mode as ChatMode], mode as ChatMode];
   } catch (error) {
-    // Default to gpt-4o-mini if there's an error
     console.error("Error selecting model, defaulting to gpt-4o-mini:", error);
+    return ["gpt-4o-mini", "casual chat"];
   }
+};
+
+export async function* getChatResponse(
+  messages: Message[],
+  language: "zh" | "en"
+) {
+  const lastMessage = messages[messages.length - 1].content;
+  const [modelId, selectedMode] = await selectModelAndMode(lastMessage);
+  const model = openai(modelId);
 
   const reader = await (
     await streamText({
@@ -32,23 +64,24 @@ export async function* getChatResponse(messages: string[]) {
       messages: [
         {
           role: "system",
-          content: "Do not return markdown, just return the text.",
+          content: getSystemPrompt(language),
         },
-        ...messages.map((content) => ({ role: "user", content } as const)),
+        ...messages,
       ],
     }).textStream
   ).getReader();
 
   console.log(
-    "Last message:",
-    messages[messages.length - 1],
-    "Using model:",
-    model.modelId
+    `Replied to "${
+      messages[messages.length - 2]?.content || "None - first message"
+    }" ` +
+      `with "${lastMessage}" ` +
+      `using ${modelId} (${selectedMode} mode)`
   );
 
   while (true) {
     const { done, value } = await reader.read();
     if (done) break;
-    yield value;
+    yield { text: value, mode: selectedMode };
   }
 }
