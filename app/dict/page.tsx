@@ -12,6 +12,8 @@ import { cacheLife } from "next/dist/server/use-cache/cache-life";
 import Link from "next/link";
 import { ErrorBoundary } from "./error-boundary";
 import { Pronounce } from "./pronounce";
+import { QueryHistory, SaveQuery } from "./persistence";
+import Form from "next/form";
 
 type ISearchParams = Promise<{
   query: string | undefined;
@@ -31,6 +33,7 @@ export default function Search({
           <Link href={DICT_HOME}>𝒻𝒶𝓈𝓉 Dictionary</Link>
         </h1>
         <SearchBar />
+        <QueryHistory />
 
         <Suspense fallback={ELIPSIS}>
           <SearchHeader searchParams={searchParams} />
@@ -65,7 +68,7 @@ const SafariInitialBufferFix = () => {
 // ************* Search Bar *************
 const SearchBar = () => {
   return (
-    <form action={DICT_HOME} className="mb-4 sm:mb-6">
+    <Form action={DICT_HOME} className="mb-4 sm:mb-6">
       <div className="flex gap-2">
         <input
           autoFocus
@@ -75,7 +78,7 @@ const SearchBar = () => {
           className="flex-1 rounded-lg border border-gray-300 px-4 sm:px-6 py-2 sm:py-3 bg-white text-gray-800 placeholder-gray-500 shadow-sm transition-all duration-200 hover:border-gray-400 focus:border-gray-500 focus:ring-1 focus:ring-gray-500 focus:outline-none font-serif text-base sm:text-lg"
         />
       </div>
-    </form>
+    </Form>
   );
 };
 
@@ -97,6 +100,7 @@ const SearchHeader = async ({
             } - 𝒻𝒶𝓈𝓉 Dictionary`
           : "𝒻𝒶𝓈𝓉 Dictionary"}
       </title>
+      <SaveQuery query={query} />
       <h2 className="text-2xl font-serif text-gray-800 line-clamp-1">
         {query}
       </h2>
@@ -115,12 +119,13 @@ const SearchContent = async ({
   if (!query) {
     return null;
   }
-  console.log("query", query);
   return (
-    <div className="rounded-lg border border-gray-200 p-4 sm:p-6 bg-white shadow-md">
-      <RenderSearch query={query} />
-      {/* <RenderImage query={query} /> */}
-    </div>
+    <>
+      <div className="rounded-lg border border-gray-200 p-4 sm:p-6 bg-white shadow-md">
+        <RenderSearch query={query} />
+        {/* <RenderImage query={query} /> */}
+      </div>
+    </>
   );
 };
 
