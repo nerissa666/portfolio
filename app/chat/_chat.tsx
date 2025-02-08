@@ -36,6 +36,9 @@ export const ChatInterface = () => {
     // Add user message immediately
     setMessages((prev) => [...prev, { role: "user", content: currentMessage }]);
 
+    // Ensure scroll after adding user message
+    setTimeout(scrollToBottom, 0);
+
     try {
       // Extract just the content from messages
       const messageContents = [
@@ -61,8 +64,6 @@ export const ChatInterface = () => {
           return newMessages;
         });
       }
-
-      scrollToBottom();
     } catch (error) {
       console.error("Error:", error);
       setMessages((prev) => [
@@ -79,7 +80,7 @@ export const ChatInterface = () => {
 
   return (
     <div className="fixed inset-0 flex flex-col">
-      <div className="flex-1 overflow-y-auto p-4">
+      <div className="flex-1 overflow-y-auto p-4 pb-[160px]">
         {messages.map((message, index) => (
           <div
             key={index}
@@ -101,7 +102,7 @@ export const ChatInterface = () => {
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="p-4 bg-white border-t">
+      <div className="p-4 bg-white border-t fixed bottom-0 left-0 right-0 shadow-lg">
         <form onSubmit={handleSubmit} className="relative">
           <textarea
             ref={inputRef}
