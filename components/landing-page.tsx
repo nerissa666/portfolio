@@ -187,7 +187,7 @@ export function LandingPage({ image }: { image: ReactNode }) {
               <h3 className="text-md font-semibold text-white mb-2 flex items-center">
                 <MessageSquare className="h-5 w-5 mr-2 text-blue-400" />
                 <Link href="/chat" className="hover:underline">
-                  Chinese Chatbot
+                  𝒞𝒽𝒶𝓉
                 </Link>
               </h3>
               <p className="text-sm text-zinc-300">
