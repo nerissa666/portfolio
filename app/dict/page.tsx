@@ -16,6 +16,8 @@ import { QueryHistory, SaveQuery } from "./persistence";
 import { SearchBar } from "./search-bar";
 import { DICT_HOME } from "./consts";
 import { ClearForm, CtxProvider } from "./Ctx";
+import { FollowUp } from "./follow-up";
+
 type ISearchParams = Promise<{
   query: string | undefined;
 }>;
@@ -182,20 +184,25 @@ not least (尤其重要): At least as significant as other factors.
         </>
       }
     >
-      <RenderStream reader={reader} />
+      <RenderStream
+        reader={reader}
+        appendWhenDone={<FollowUp query={query} />}
+      />
     </Suspense>
   );
 };
 
 const RenderStream = async ({
   reader,
+  appendWhenDone,
 }: {
   reader: ReadableStreamDefaultReader<string>;
+  appendWhenDone: React.ReactNode;
 }) => {
   const { done, value } = await reader.read();
 
   if (done) {
-    return null;
+    return appendWhenDone;
   }
 
   return (
@@ -204,7 +211,7 @@ const RenderStream = async ({
         {value}
       </span>
       <Suspense fallback={ELIPSIS}>
-        <RenderStream reader={reader} />
+        <RenderStream reader={reader} appendWhenDone={appendWhenDone} />
       </Suspense>
     </>
   );
