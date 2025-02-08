@@ -68,7 +68,7 @@ export function QueryHistory() {
 
       {isOpen && (
         <div className="absolute bottom-14 right-0 w-[calc(100vw-2rem)] sm:w-72 h-[400px] bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden backdrop-blur-sm bg-white/95">
-          <div className="p-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
+          <div className="px-3 sm:px-4 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
             <h3 className="font-serif text-gray-800 text-sm sm:text-base font-medium">
               Recent Searches
             </h3>
@@ -88,7 +88,7 @@ export function QueryHistory() {
 
           <div className="overflow-y-auto h-[calc(400px-57px)] scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
             {queries.length === 0 ? (
-              <p className="p-6 text-gray-500 text-center text-sm sm:text-base">
+              <p className="px-4 sm:px-4 py-6 text-gray-500 text-center text-sm sm:text-base">
                 No recent searches
               </p>
             ) : (
@@ -96,7 +96,7 @@ export function QueryHistory() {
                 {queries.map((q, i) => (
                   <li
                     key={i}
-                    className="flex items-center justify-between p-3 sm:p-4 hover:bg-gray-50 transition-colors group"
+                    className="flex items-center justify-between px-4 sm:px-4 py-3 sm:py-4 hover:bg-gray-50 transition-colors group"
                   >
                     <a
                       href={`/dict?query=${encodeURIComponent(q)}`}
