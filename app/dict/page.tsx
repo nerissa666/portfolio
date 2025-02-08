@@ -15,6 +15,7 @@ import { Pronounce } from "./pronounce";
 import { QueryHistory, SaveQuery } from "./persistence";
 import { SearchBar } from "./search-bar";
 import { DICT_HOME } from "./consts";
+import { ClearForm, CtxProvider } from "./Ctx";
 type ISearchParams = Promise<{
   query: string | undefined;
 }>;
@@ -30,9 +31,10 @@ export default function Search({
         <h1 className="text-3xl sm:text-4xl font-serif text-gray-800 mb-6 sm:mb-8 text-center">
           <Link href={DICT_HOME}>𝒻𝒶𝓈𝓉 Dictionary</Link>
         </h1>
-        <Suspense>
+        <CtxProvider>
           <SearchBar />
-        </Suspense>
+          <ClearForm />
+        </CtxProvider>
 
         <Suspense>
           <QueryHistory />

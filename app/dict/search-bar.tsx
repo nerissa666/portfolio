@@ -1,15 +1,13 @@
 "use client";
 
 import { DICT_HOME } from "./consts";
-import { useSearchParams } from "next/navigation";
 import Form from "next/form";
+import { useCtxRef } from "./Ctx";
 
 export const SearchBar = () => {
-  const searchParams = useSearchParams();
-  const query = searchParams.get("query");
-
+  const ref = useCtxRef();
   return (
-    <Form action={DICT_HOME} className="mb-4 sm:mb-6" key={query}>
+    <Form action={DICT_HOME} className="mb-4 sm:mb-6" ref={ref}>
       <div className="flex gap-2">
         <input
           autoFocus
