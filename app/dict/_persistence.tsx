@@ -27,6 +27,11 @@ function deleteQuery(queryToDelete: string): void {
   localStorage.setItem("queryHistory", JSON.stringify(updatedQueries));
 }
 
+// Function to clear all queries from history
+function clearAllQueries(): void {
+  localStorage.setItem("queryHistory", JSON.stringify([]));
+}
+
 // SaveQuery component
 export function SaveQuery({ query }: { query: string }) {
   if (!query) return null;
@@ -56,28 +61,34 @@ export function QueryHistory() {
     <div className="fixed bottom-4 right-4 z-50 query-history-container">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="bg-white rounded-full w-10 h-10 md:w-12 md:h-12 shadow-md flex items-center justify-center hover:bg-gray-50 transition-colors duration-200 border border-gray-200"
+        className="bg-white rounded-full w-10 h-10 md:w-12 md:h-12 shadow-lg flex items-center justify-center hover:bg-gray-50 active:bg-gray-100 transition-all duration-200 border border-gray-200 hover:shadow-xl"
       >
-        <span className="text-gray-600">🕒</span>
+        <span className="text-gray-600 text-lg">🕒</span>
       </button>
 
       {isOpen && (
-        <div className="absolute bottom-14 right-0 w-[calc(100vw-2rem)] sm:w-64 max-h-[60vh] bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden">
-          <div className="p-3 border-b border-gray-200 flex justify-between items-center">
-            <h3 className="font-serif text-gray-800 text-sm sm:text-base">
+        <div className="absolute bottom-14 right-0 w-[calc(100vw-2rem)] sm:w-72 h-[400px] bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden backdrop-blur-sm bg-white/95">
+          <div className="p-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
+            <h3 className="font-serif text-gray-800 text-sm sm:text-base font-medium">
               Recent Searches
             </h3>
-            <button
-              onClick={() => setIsOpen(false)}
-              className="text-gray-500 hover:text-gray-700"
-            >
-              <X size={16} className="sm:w-[18px] sm:h-[18px]" />
-            </button>
+            {queries.length > 0 && (
+              <button
+                onClick={() => {
+                  clearAllQueries();
+                  setIsOpen(false);
+                  setTimeout(() => setIsOpen(true), 0);
+                }}
+                className="text-sm text-gray-500 hover:text-red-500 transition-colors"
+              >
+                Clear All
+              </button>
+            )}
           </div>
 
-          <div className="overflow-y-auto max-h-[50vh]">
+          <div className="overflow-y-auto h-[calc(400px-57px)] scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
             {queries.length === 0 ? (
-              <p className="p-4 text-gray-500 text-center text-sm sm:text-base">
+              <p className="p-6 text-gray-500 text-center text-sm sm:text-base">
                 No recent searches
               </p>
             ) : (
@@ -85,11 +96,11 @@ export function QueryHistory() {
                 {queries.map((q, i) => (
                   <li
                     key={i}
-                    className="flex items-center justify-between p-2 sm:p-3 hover:bg-gray-50"
+                    className="flex items-center justify-between p-3 sm:p-4 hover:bg-gray-50 transition-colors group"
                   >
                     <a
                       href={`/dict?query=${encodeURIComponent(q)}`}
-                      className="text-gray-700 hover:text-gray-900 font-serif flex-1 truncate text-sm sm:text-base"
+                      className="text-gray-700 hover:text-gray-900 font-serif flex-1 truncate text-sm sm:text-base hover:underline"
                     >
                       {q}
                     </a>
@@ -99,7 +110,7 @@ export function QueryHistory() {
                         setIsOpen(false);
                         setTimeout(() => setIsOpen(true), 0);
                       }}
-                      className="ml-2 text-gray-400 hover:text-red-500"
+                      className="ml-2 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-gray-200 rounded-full"
                     >
                       <X size={14} className="sm:w-4 sm:h-4" />
                     </button>

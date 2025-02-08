@@ -13,13 +13,11 @@ import Link from "next/link";
 import { ErrorBoundary } from "./error-boundary";
 import { Pronounce } from "./pronounce";
 import { QueryHistory, SaveQuery } from "./persistence";
-import Form from "next/form";
-
+import { SearchBar } from "./search-bar";
+import { DICT_HOME } from "./consts";
 type ISearchParams = Promise<{
   query: string | undefined;
 }>;
-
-const DICT_HOME = "/dict";
 
 export default function Search({
   searchParams,
@@ -63,23 +61,6 @@ const ELIPSIS = <p className="text-gray-600">...</p>;
 // Safari buffers the first 1KB of content, so we need to add invisible characters to force it to flush the initial buffering
 const SafariInitialBufferFix = () => {
   return <>{"\u200b".repeat(1024)}</>;
-};
-
-// ************* Search Bar *************
-const SearchBar = () => {
-  return (
-    <Form action={DICT_HOME} className="mb-4 sm:mb-6">
-      <div className="flex gap-2">
-        <input
-          autoFocus
-          type="text"
-          name="query"
-          placeholder="Look up a word/phrase..."
-          className="flex-1 rounded-lg border border-gray-300 px-4 sm:px-6 py-2 sm:py-3 bg-white text-gray-800 placeholder-gray-500 shadow-sm transition-all duration-200 hover:border-gray-400 focus:border-gray-500 focus:ring-1 focus:ring-gray-500 focus:outline-none font-serif text-base sm:text-lg"
-        />
-      </div>
-    </Form>
-  );
 };
 
 const SearchHeader = async ({
