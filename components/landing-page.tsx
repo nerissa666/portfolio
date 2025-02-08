@@ -180,9 +180,7 @@ export function LandingPage({ image }: { image: ReactNode }) {
                   𝒻𝒶𝓈𝓉 Dictionary
                 </Link>
               </h3>
-              <p className="text-sm text-zinc-300">
-                AI-powered dictionary with image generation
-              </p>
+              <p className="text-sm text-zinc-300">AI-powered dictionary</p>
             </div>
           </div>
         </CardContent>

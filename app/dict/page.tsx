@@ -48,20 +48,9 @@ export default function Search({
 }
 
 // ************* Meta Data *************
-export const generateMetadata = async ({
-  searchParams,
-}: {
-  searchParams: ISearchParams;
-}) => {
-  const { query } = await searchParams;
-  return {
-    title: query
-      ? `${query?.slice(0, 30)}${
-          query?.length > 30 ? "..." : ""
-        } - 𝒻𝒶𝓈𝓉 Dictionary`
-      : "𝒻𝒶𝓈𝓉 Dictionary",
-    description: "Simple AI dictionary",
-  };
+export const metadata = {
+  title: "𝒻𝒶𝓈𝓉 Dictionary",
+  description: "Simple AI dictionary",
 };
 
 // ************* Shared *************
@@ -100,6 +89,13 @@ const SearchHeader = async ({
   }
   return (
     <div className="flex items-center justify-between mb-4">
+      <title>
+        {query
+          ? `${query.split(" ").slice(0, 2).join(" ")}${
+              query.split(" ").length > 2 ? "..." : ""
+            } - 𝒻𝒶𝓈𝓉 Dictionary`
+          : "𝒻𝒶𝓈𝓉 Dictionary"}
+      </title>
       <h2 className="text-2xl font-serif text-gray-800 line-clamp-1">
         {query}
       </h2>
@@ -122,7 +118,7 @@ const SearchContent = async ({
   return (
     <div className="rounded-lg border border-gray-200 p-4 sm:p-6 bg-white shadow-md">
       <RenderSearch query={query} />
-      <RenderImage query={query} />
+      {/* <RenderImage query={query} /> */}
     </div>
   );
 };
