@@ -31,17 +31,18 @@ export default function Search({
           <Link href={DICT_HOME}>𝒻𝒶𝓈𝓉 Dictionary</Link>
         </h1>
         <SearchBar />
-        <Suspense>
-          <SearchHeader searchParams={searchParams} />
-        </Suspense>
 
-        <ErrorBoundary
-          fallback={<div>Something went wrong. Please try again.</div>}
-        >
-          <Suspense>
-            <SearchContent searchParams={searchParams} />
-          </Suspense>
-        </ErrorBoundary>
+        <Suspense fallback={ELIPSIS}>
+          <SearchHeader searchParams={searchParams} />
+
+          <ErrorBoundary
+            fallback={<div>Something went wrong. Please try again.</div>}
+          >
+            <Suspense>
+              <SearchContent searchParams={searchParams} />
+            </Suspense>
+          </ErrorBoundary>
+        </Suspense>
       </div>
     </div>
   );
