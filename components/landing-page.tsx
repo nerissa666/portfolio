@@ -9,6 +9,7 @@ import {
   BookOpen,
   Code,
   AppWindow,
+  MessageSquare,
 } from "lucide-react";
 import Link from "next/link";
 import { ReactNode } from "react";
@@ -181,6 +182,17 @@ export function LandingPage({ image }: { image: ReactNode }) {
                 </Link>
               </h3>
               <p className="text-sm text-zinc-300">AI-powered dictionary</p>
+            </div>
+            <div className="bg-zinc-800/50 p-4 rounded-lg mt-4">
+              <h3 className="text-md font-semibold text-white mb-2 flex items-center">
+                <MessageSquare className="h-5 w-5 mr-2 text-blue-400" />
+                <Link href="/chat" className="hover:underline">
+                  Chinese Chatbot
+                </Link>
+              </h3>
+              <p className="text-sm text-zinc-300">
+                Casual Chinese conversation partner powered by AI
+              </p>
             </div>
           </div>
         </CardContent>
