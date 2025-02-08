@@ -18,6 +18,8 @@ export async function* getChatResponse(messages: string[]) {
     }).textStream
   ).getReader();
 
+  console.log("Last message:", messages[messages.length - 1]);
+
   while (true) {
     const { done, value } = await reader.read();
     if (done) break;
