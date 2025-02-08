@@ -63,6 +63,8 @@ export const ChatInterface = () => {
           };
           return newMessages;
         });
+        // Add immediate scroll after each chunk
+        setTimeout(scrollToBottom, 0);
       }
     } catch (error) {
       console.error("Error:", error);
