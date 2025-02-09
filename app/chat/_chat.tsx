@@ -95,9 +95,7 @@ const Message = React.memo(
       >
         <div
           className={`max-w-[85%] rounded-2xl px-4 py-3 text-left ${
-            message.role === "user"
-              ? "bg-blue-600 text-white"
-              : "bg-gray-100 text-gray-900"
+            message.role === "user" ? "bg-blue-100" : "bg-gray-100"
           }`}
         >
           {message.role === "assistant" && message.mode && (
