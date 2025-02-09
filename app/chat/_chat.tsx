@@ -26,7 +26,7 @@ const MarkdownContent = React.memo(({ content }: { content: string }) => {
     <ReactMarkdown
       remarkPlugins={[remarkMath]}
       rehypePlugins={[rehypeKatex, rehypeHighlight]}
-      className="prose max-w-none space-y-4 [&>p]:leading-relaxed [&>*]:font-normal"
+      className="prose max-w-none break-words whitespace-pre-line"
     >
       {processedContent}
     </ReactMarkdown>
@@ -87,30 +87,34 @@ const Message = React.memo(
     message: { role: string; content: string; mode?: string };
     language: "zh" | "en";
   }) => (
-    <div
-      className={`mb-4 ${message.role === "user" ? "text-right" : "text-left"}`}
-    >
+    <div className="mb-4">
       <div
-        className={`inline-block max-w-[85%] rounded-2xl px-4 py-3 ${
-          message.role === "user"
-            ? "bg-blue-600 text-white"
-            : "bg-gray-100 text-gray-900"
+        className={`flex ${
+          message.role === "user" ? "justify-end" : "justify-start"
         }`}
       >
-        {message.role === "assistant" && message.mode && (
-          <div className="text-xs text-gray-600 mb-1">
-            {message.mode === "reasoning" &&
-              (language === "zh" ? "🤔 思考模式" : "🤔 Reasoning")}
-            {message.mode === "chat" &&
-              (language === "zh" ? "💬 聊天模式" : "💬 Chat")}
-          </div>
-        )}
-        <div className="prose max-w-none">
-          {message.content !== "\u200B" ? (
-            <MarkdownContent content={message.content} />
-          ) : (
-            <LoadingDots />
+        <div
+          className={`max-w-[85%] rounded-2xl px-4 py-3 text-left ${
+            message.role === "user"
+              ? "bg-blue-600 text-white"
+              : "bg-gray-100 text-gray-900"
+          }`}
+        >
+          {message.role === "assistant" && message.mode && (
+            <div className="text-xs text-gray-600 mb-1">
+              {message.mode === "reasoning" &&
+                (language === "zh" ? "🤔 思考模式" : "🤔 Reasoning")}
+              {message.mode === "chat" &&
+                (language === "zh" ? "💬 聊天模式" : "💬 Chat")}
+            </div>
           )}
+          <div className="prose max-w-none">
+            {message.content !== "\u200B" ? (
+              <MarkdownContent content={message.content} />
+            ) : (
+              <LoadingDots />
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -202,18 +206,27 @@ export const ChatInterface = () => {
     const langParam = searchParams.get("lang");
     return langParam === "zh" || langParam === "en" ? langParam : "en";
   });
-  const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  const scrollToBottom = useRef(
-    throttle(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, 250)
-  ).current;
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = useRef(() => {
+    const messages = document.querySelectorAll(".mb-4");
+    const lastMessage = messages[messages.length - 1];
+    if (lastMessage) {
+      lastMessage.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+        inline: "nearest",
+      });
+    }
+  }).current;
 
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    if (isLoading) {
+      scrollToBottom();
+    }
+  }, [isLoading]);
 
   useEffect(() => {
     if (inputRef.current && isLoading == false) {
@@ -289,11 +302,13 @@ export const ChatInterface = () => {
     <div className="fixed inset-0 flex flex-col bg-white">
       <div className="flex-1 overflow-hidden">
         <div className="h-full mx-auto w-full max-w-3xl">
-          <div className="h-full overflow-y-auto p-4 pb-[120px]">
+          <div
+            className="h-full overflow-y-auto p-4 pb-[50vh]"
+            ref={messagesContainerRef}
+          >
             {messages.map((message, index) => (
               <Message key={index} message={message} language={language} />
             ))}
-            <div ref={messagesEndRef} />
             <div className="h-12" />
           </div>
         </div>

@@ -15,14 +15,16 @@ const MODEL_MAP = {
   chat: "gpt-4o-mini",
 } as const;
 
-const getSystemPrompt = (language: "zh" | "en"): string => {
-  const prompt = "Be informal & concise.";
-
-  console.log(language);
+const getSystemPrompt = (language: "zh" | "en", mode: ChatMode): string => {
+  const basePrompt = "Be informal & concise.";
+  const modePrompt =
+    mode === "reasoning"
+      ? "Focus on clear explanations and logical reasoning."
+      : "Be conversational and engaging.";
 
   return language === "zh"
-    ? `必须使用中文回复. ${prompt}`
-    : `You must speak English to respond. ${prompt}`;
+    ? `无论如何必须使用中文回复. ${basePrompt} ${modePrompt}`
+    : `Must reply in English in any case. ${basePrompt} ${modePrompt}`;
 };
 
 const selectModelAndMode = async (
@@ -78,7 +80,7 @@ export async function* getChatResponse(
       messages: [
         {
           role: "system",
-          content: getSystemPrompt(language),
+          content: getSystemPrompt(language, selectedMode),
         },
         ...messages,
       ],
