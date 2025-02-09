@@ -5,6 +5,7 @@ import React from "react";
 import { getChatResponse } from "./chat.action";
 import { throttle } from "lodash";
 import "katex/dist/katex.min.css";
+import { useSearchParams } from "next/navigation";
 
 import ReactMarkdown from "react-markdown";
 import rehypeKatex from "rehype-katex";
@@ -70,7 +71,7 @@ const LanguageSelector = React.memo(
           bg-white hover:border-blue-500 transition-colors text-gray-700
           cursor-pointer"
       >
-        <option value="zh">Chinese</option>
+        <option value="zh">中文</option>
         <option value="en">English</option>
       </select>
     </div>
@@ -191,6 +192,7 @@ const ChatInput = React.memo(
 
 // Main chat interface
 export const ChatInterface = () => {
+  const searchParams = useSearchParams();
   const [messages, setMessages] = useState<
     Array<{
       role: "system" | "user" | "assistant";
@@ -200,7 +202,10 @@ export const ChatInterface = () => {
   >([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [language, setLanguage] = useState<"zh" | "en">("en");
+  const [language, setLanguage] = useState<"zh" | "en">(() => {
+    const langParam = searchParams.get("lang");
+    return langParam === "zh" || langParam === "en" ? langParam : "en";
+  });
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 

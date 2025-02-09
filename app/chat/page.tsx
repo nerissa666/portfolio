@@ -1,7 +1,12 @@
+import { Suspense } from "react";
 import { Chat } from "./chat";
 
 export default function ChatPage() {
-  return <Chat />;
+  return (
+    <Suspense>
+      <Chat />
+    </Suspense>
+  );
 }
 
 export const metadata = {
