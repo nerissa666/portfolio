@@ -99,14 +99,10 @@ const Message = React.memo(
       >
         {message.role === "assistant" && message.mode && (
           <div className="text-xs text-gray-600 mb-1">
-            {message.mode === "deep reasoning" &&
-              (language === "zh" ? "🤔 深度思考" : "🤔 Deep")}
-            {message.mode === "some reasoning" &&
-              (language === "zh" ? "💭 思考中" : "💭 Thinking")}
-            {message.mode === "serious chat" &&
-              (language === "zh" ? "💬 严肃" : "💬 Serious")}
-            {message.mode === "casual chat" &&
-              (language === "zh" ? "😊 轻松" : "😊 Casual")}
+            {message.mode === "reasoning" &&
+              (language === "zh" ? "🤔 思考模式" : "🤔 Reasoning")}
+            {message.mode === "chat" &&
+              (language === "zh" ? "💬 聊天模式" : "💬 Chat")}
           </div>
         )}
         <div className="prose max-w-none">

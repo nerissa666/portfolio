@@ -8,17 +8,11 @@ type Message = {
   content: string;
 };
 
-type ChatMode =
-  | "deep reasoning"
-  | "some reasoning"
-  | "serious chat"
-  | "casual chat";
+type ChatMode = keyof typeof MODEL_MAP;
 
 const MODEL_MAP = {
-  "deep reasoning": "o1-mini",
-  "some reasoning": "gpt-4o",
-  "serious chat": "gpt-4-turbo",
-  "casual chat": "gpt-4o-mini",
+  reasoning: "o1-mini",
+  chat: "gpt-4o-mini",
 } as const;
 
 const getSystemPrompt = (language: "zh" | "en"): string => {
@@ -32,26 +26,49 @@ const getSystemPrompt = (language: "zh" | "en"): string => {
 };
 
 const selectModelAndMode = async (
-  message: string
+  messages: Message[]
 ): Promise<[string, ChatMode]> => {
-  const wordCount = message.trim().split(/\s+/).length;
-
-  if (wordCount <= 2) {
-    return ["gpt-4-turbo", "casual chat"];
-  }
-
   try {
     const { object: mode } = await generateObject({
       model: openai("gpt-4-turbo"),
-      prompt: `Decide which model should be used to based on the message: [${message}]`,
+      prompt: `Analyze the conversation to choose between 'chat' and 'reasoning' model. Follow these rules:
+
+1. Use REASONING model if the message contains:
+- Math problems (equations, calculations, algebra)
+- Coding/technical questions (debugging, algorithms)
+- Logic puzzles or step-by-step reasoning requests
+- Requests for factual explanations (science, history facts)
+- Direct questions needing precise answers
+- Words like "calculate", "solve", "explain how", "why does"
+
+2. Use CHAT model for:
+- Open-ended conversations
+- Opinion requests
+- Creative writing/storytelling
+- General advice/relationship topics
+- Casual chatting/jokes
+- Multi-turn discussions without technical focus
+- Words like "opinion", "creative", "story", "chat"
+
+Examples:
+[Q: "Solve 2x + 5 = 15"] → reasoning
+[Q: "How to make friends?"] → chat
+[Q: "Explain quantum physics"] → reasoning
+[Q: "Write a poem"] → chat
+
+Now analyze the following messages (ordered from most recent to least recent): "${messages
+        .slice(-3)
+        .map((m) => m.content)
+        .reverse()
+        .join(".\n")}"`,
       output: "enum",
       enum: Object.keys(MODEL_MAP),
     });
 
-    return [MODEL_MAP[mode as ChatMode], mode as ChatMode];
+    return [MODEL_MAP[mode as keyof typeof MODEL_MAP], mode as ChatMode];
   } catch (error) {
     console.error("Error selecting model, defaulting to gpt-4o-mini:", error);
-    return ["gpt-4o-mini", "casual chat"];
+    return ["gpt-4o-mini", "chat"];
   }
 };
 
@@ -61,13 +78,7 @@ export async function* getChatResponse(
 ) {
   const lastMessage = messages[messages.length - 1];
 
-  const [modelId, selectedMode] = await selectModelAndMode(
-    messages
-      .filter((msg) => msg.role === "user")
-      .slice(-10)
-      .map((msg) => msg.content)
-      .join("->")
-  );
+  const [modelId, selectedMode] = await selectModelAndMode(messages);
 
   const model = openai(modelId);
 
