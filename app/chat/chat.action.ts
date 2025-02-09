@@ -29,38 +29,28 @@ const selectModelAndMode = async (
   messages: Message[]
 ): Promise<[string, ChatMode]> => {
   try {
+    const lastMessage = messages[messages.length - 1];
+
     const { object: mode } = await generateObject({
-      model: openai("gpt-4-turbo"),
-      prompt: `Analyze the conversation to choose between 'chat' and 'reasoning' model. Follow these rules:
+      model: openai("gpt-4o-mini"),
+      prompt: `Choose 'reasoning' or 'chat' model based on the message content:
 
-1. Use REASONING model if the message contains:
-- Math problems (equations, calculations, algebra)
-- Coding/technical questions (debugging, algorithms)
-- Logic puzzles or step-by-step reasoning requests
-- Requests for factual explanations (science, history facts)
-- Direct questions needing precise answers
-- Words like "calculate", "solve", "explain how", "why does"
+REASONING for:
+- Math/calculations
+- Technical questions
+- Logic puzzles
+- Factual explanations
+- Direct questions
+- Keywords: calculate, solve, explain, why
 
-2. Use CHAT model for:
-- Open-ended conversations
-- Opinion requests
-- Creative writing/storytelling
-- General advice/relationship topics
-- Casual chatting/jokes
-- Multi-turn discussions without technical focus
-- Words like "opinion", "creative", "story", "chat"
+CHAT for:
+- Open discussions
+- Opinions/advice
+- Creative content
+- Casual conversation
+- Keywords: opinion, creative, chat
 
-Examples:
-[Q: "Solve 2x + 5 = 15"] → reasoning
-[Q: "How to make friends?"] → chat
-[Q: "Explain quantum physics"] → reasoning
-[Q: "Write a poem"] → chat
-
-Now analyze the following messages (ordered from most recent to least recent): "${messages
-        .slice(-3)
-        .map((m) => m.content)
-        .reverse()
-        .join(".\n")}"`,
+Analyze:\n"${lastMessage.content}"`,
       output: "enum",
       enum: Object.keys(MODEL_MAP),
     });
