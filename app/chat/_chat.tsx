@@ -59,7 +59,7 @@ const LanguageSelector = React.memo(
         htmlFor="language-select"
         className="text-sm text-gray-600 font-medium"
       >
-        Language:
+        {language === "zh" ? "语言：" : "Language:"}
       </label>
       <select
         id="language-select"
@@ -81,8 +81,10 @@ const LanguageSelector = React.memo(
 const Message = React.memo(
   ({
     message,
+    language,
   }: {
     message: { role: string; content: string; mode?: string };
+    language: "zh" | "en";
   }) => (
     <div
       className={`mb-4 ${message.role === "user" ? "text-right" : "text-left"}`}
@@ -96,10 +98,14 @@ const Message = React.memo(
       >
         {message.role === "assistant" && message.mode && (
           <div className="text-xs text-gray-600 mb-1">
-            {message.mode === "deep reasoning" && "🤔 Deep"}
-            {message.mode === "some reasoning" && "💭 Thinking"}
-            {message.mode === "serious chat" && "💬 Serious"}
-            {message.mode === "casual chat" && "😊 Casual"}
+            {message.mode === "deep reasoning" &&
+              (language === "zh" ? "🤔 深度思考" : "🤔 Deep")}
+            {message.mode === "some reasoning" &&
+              (language === "zh" ? "💭 思考中" : "💭 Thinking")}
+            {message.mode === "serious chat" &&
+              (language === "zh" ? "💬 严肃" : "💬 Serious")}
+            {message.mode === "casual chat" &&
+              (language === "zh" ? "😊 轻松" : "😊 Casual")}
           </div>
         )}
         <div className="prose max-w-none">
@@ -280,7 +286,7 @@ export const ChatInterface = () => {
         <div className="h-full mx-auto w-full max-w-3xl">
           <div className="h-full overflow-y-auto p-4 pb-[120px]">
             {messages.map((message, index) => (
-              <Message key={index} message={message} />
+              <Message key={index} message={message} language={language} />
             ))}
             <div ref={messagesEndRef} />
             <div className="h-12" />
