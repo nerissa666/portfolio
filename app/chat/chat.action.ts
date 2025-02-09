@@ -4,7 +4,7 @@ import { openai } from "@ai-sdk/openai";
 import { generateObject, generateText, streamText } from "ai";
 
 type Message = {
-  role: "system" | "user" | "assistant" | "data";
+  role: "system" | "user" | "assistant";
   content: string;
 };
 
@@ -86,7 +86,7 @@ export async function* getChatResponse(
     `Replied to "${
       messages[messages.length - 2]?.content || "None - first message"
     }" ` +
-      `with "${lastMessage}" ` +
+      `with "${lastMessage.content}" ` +
       `using ${modelId} (${selectedMode} mode)`
   );
 
