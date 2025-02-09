@@ -12,7 +12,7 @@ import rehypeKatex from "rehype-katex";
 import remarkMath from "remark-math";
 import rehypeHighlight from "rehype-highlight";
 import "highlight.js/styles/github.css";
-import {} from "react-dom";
+import "./markdown.css";
 
 // Markdown component with memoization since it's pure
 const MarkdownContent = React.memo(({ content }: { content: string }) => {
@@ -26,7 +26,7 @@ const MarkdownContent = React.memo(({ content }: { content: string }) => {
     <ReactMarkdown
       remarkPlugins={[remarkMath]}
       rehypePlugins={[rehypeKatex, rehypeHighlight]}
-      className="prose max-w-none [&>ul]:list-disc [&>ul]:list-outside [&>ul>li]:my-1 [&>hr]:my-8"
+      className="markdown"
     >
       {processedContent}
     </ReactMarkdown>
@@ -206,6 +206,7 @@ export const ChatInterface = () => {
     const langParam = searchParams.get("lang");
     return langParam === "zh" || langParam === "en" ? langParam : "en";
   });
+
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -265,12 +266,10 @@ export const ChatInterface = () => {
       let hasStartedMessage = false;
 
       for await (const obj of generator) {
-        console.log(obj);
         const { text, mode, firstChunkOfNewMessage } = obj;
 
         if (!hasStartedMessage || firstChunkOfNewMessage) {
           // Start a new message for first chunk or when flag is true
-          console.log("new");
           setMessages((prev) => [
             ...prev,
             { role: "assistant", content: text, mode },
@@ -280,7 +279,6 @@ export const ChatInterface = () => {
           currentMode = mode;
         } else {
           // Append to existing message
-          console.log("append");
           fullAnswer += text;
           setMessages((prev) => {
             const newMessages = [...prev];

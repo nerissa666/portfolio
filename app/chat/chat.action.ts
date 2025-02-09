@@ -18,10 +18,11 @@ const MODEL_MAP = {
 const getSystemPrompt = (language: "zh" | "en", mode: ChatMode): string => {
   const basePrompt =
     "To create human-like experience, you must split your response into a few chunks. Each chunk must be separated by exactly one emoji 🔗. For example: 'First chunk🔗Second chunk🔗Third chunk'.";
+
   const modePrompt =
     mode === "reasoning"
-      ? "Focus on clear explanations and logical reasoning."
-      : "Be conversational and engaging.";
+      ? "Focus on clear explanations and logical reasoning. Don't be too verbose."
+      : "Be conversational, engaging, and colloquial.";
 
   return language === "zh"
     ? `无论如何必须使用中文回复. ${basePrompt} ${modePrompt}`
@@ -76,8 +77,6 @@ export async function* getChatResponse(
   const model = openai(modelId);
 
   const systemPrompt = getSystemPrompt(language, selectedMode);
-
-  console.log(systemPrompt);
 
   const reader = await (
     await streamText({
