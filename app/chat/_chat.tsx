@@ -206,10 +206,13 @@ export const ChatInterface = () => {
 
   useEffect(() => {
     scrollToBottom();
-    if (inputRef.current) {
+  }, [messages]);
+
+  useEffect(() => {
+    if (inputRef.current && isLoading == false) {
       inputRef.current.focus();
     }
-  }, [messages]);
+  }, [isLoading]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -223,7 +226,13 @@ export const ChatInterface = () => {
 
     try {
       const generator = await getChatResponse(
-        [...messages.slice(-9), { role: "user", content: currentMessage }],
+        [
+          ...messages.map((msg) => ({
+            ...msg,
+            content: msg.content.slice(0, 50),
+          })),
+          { role: "user", content: currentMessage },
+        ],
         language
       );
 

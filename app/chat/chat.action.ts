@@ -41,7 +41,7 @@ const selectModelAndMode = async (
   try {
     const { object: mode } = await generateObject({
       model: openai("gpt-4-turbo"),
-      prompt: `Decide which model should be used to based on the message: ${message}`,
+      prompt: `Decide which model should be used to based on the message: [${message}]`,
       output: "enum",
       enum: Object.keys(MODEL_MAP),
     });
@@ -57,8 +57,16 @@ export async function* getChatResponse(
   messages: Message[],
   language: "zh" | "en"
 ) {
-  const lastMessage = messages[messages.length - 1].content;
-  const [modelId, selectedMode] = await selectModelAndMode(lastMessage);
+  const lastMessage = messages[messages.length - 1];
+
+  const [modelId, selectedMode] = await selectModelAndMode(
+    messages
+      .filter((msg) => msg.role === "user")
+      .slice(-10)
+      .map((msg) => msg.content)
+      .join("->")
+  );
+
   const model = openai(modelId);
 
   const reader = await (
