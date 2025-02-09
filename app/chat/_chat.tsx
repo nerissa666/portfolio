@@ -240,7 +240,7 @@ export const ChatInterface = () => {
         [
           ...messages.map((msg) => ({
             ...msg,
-            content: msg.content.slice(0, 50),
+            content: msg.content.slice(0, 500),
           })),
           { role: "user", content: currentMessage },
         ],
