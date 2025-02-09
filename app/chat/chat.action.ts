@@ -24,9 +24,11 @@ const MODEL_MAP = {
 const getSystemPrompt = (language: "zh" | "en"): string => {
   const prompt = "Be informal & concise.";
 
+  console.log(language);
+
   return language === "zh"
-    ? `You must speak Chinese. ${prompt}`
-    : `You must speak English. ${prompt}`;
+    ? `必须使用中文回复. ${prompt}`
+    : `You must speak English to respond. ${prompt}`;
 };
 
 const selectModelAndMode = async (
