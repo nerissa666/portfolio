@@ -238,9 +238,13 @@ export const ChatInterface = () => {
     try {
       const generator = await getChatResponse(
         [
-          ...messages.map((msg) => ({
+          ...messages.slice(0, -5).map((msg) => ({
             ...msg,
             content: msg.content.slice(0, 500),
+          })),
+          ...messages.slice(-5).map((msg) => ({
+            ...msg,
+            content: msg.content,
           })),
           { role: "user", content: currentMessage },
         ],
