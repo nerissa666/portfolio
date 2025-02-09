@@ -16,7 +16,8 @@ const MODEL_MAP = {
 } as const;
 
 const getSystemPrompt = (language: "zh" | "en", mode: ChatMode): string => {
-  const basePrompt = "Be informal & concise.";
+  const basePrompt =
+    "To create human-like experience, you must split your response into a few chunks. Each chunk must be separated by exactly one emoji 🔗. For example: 'First chunk🔗Second chunk🔗Third chunk'.";
   const modePrompt =
     mode === "reasoning"
       ? "Focus on clear explanations and logical reasoning."
@@ -74,19 +75,22 @@ export async function* getChatResponse(
 
   const model = openai(modelId);
 
+  const systemPrompt = getSystemPrompt(language, selectedMode);
+
+  console.log(systemPrompt);
+
   const reader = await (
     await streamText({
       model,
       messages: [
         {
           role: "system",
-          content: getSystemPrompt(language, selectedMode),
+          content: systemPrompt,
         },
         ...messages,
       ],
     }).textStream
   ).getReader();
-
   console.log(
     `Replied to "${
       messages[messages.length - 2]?.content || "None - first message"
@@ -94,12 +98,46 @@ export async function* getChatResponse(
       `with "${lastMessage.content}" ` +
       `using ${modelId} (${selectedMode} mode)`
   );
-
-  yield { text: "\u200B", mode: selectedMode };
-
+  yield { text: "\u200B", mode: selectedMode, firstChunkOfNewMessage: false };
+  let buffer = "";
+  let firstChunkOfNewMessage = false;
   while (true) {
     const { done, value } = await reader.read();
-    if (done) break;
-    yield { text: value, mode: selectedMode };
+    if (done) {
+      // Yield any remaining buffer content
+      if (buffer) {
+        yield {
+          text: buffer,
+          mode: selectedMode,
+          firstChunkOfNewMessage,
+        };
+      }
+      break;
+    }
+
+    buffer += value;
+
+    while (buffer.includes("🔗")) {
+      // Find the first occurrence of the separator
+      const splitIndex = buffer.indexOf("🔗");
+      const firstPart = buffer.slice(0, splitIndex);
+      const secondPart = buffer.slice(splitIndex + 2); // +2 to skip the emoji and any extra character
+
+      // Yield the first part if it has content
+      if (firstPart) {
+        yield {
+          text: firstPart,
+          mode: selectedMode,
+          firstChunkOfNewMessage,
+        };
+        firstChunkOfNewMessage = false;
+      }
+
+      // Set flag for the next chunk
+      firstChunkOfNewMessage = true;
+
+      // Update buffer with remaining content after removing emoji
+      buffer = secondPart.trim();
+    }
   }
 }

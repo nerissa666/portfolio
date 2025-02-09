@@ -26,7 +26,7 @@ const MarkdownContent = React.memo(({ content }: { content: string }) => {
     <ReactMarkdown
       remarkPlugins={[remarkMath]}
       rehypePlugins={[rehypeKatex, rehypeHighlight]}
-      className="prose max-w-none break-words whitespace-pre-line"
+      className="prose max-w-none [&>ul]:list-disc [&>ul]:list-outside [&>ul>li]:my-1 [&>hr]:my-8"
     >
       {processedContent}
     </ReactMarkdown>
@@ -260,30 +260,40 @@ export const ChatInterface = () => {
         language
       );
 
-      const firstChunk = await generator.next();
-      if (!firstChunk.done) {
-        const { mode: initialMode } = firstChunk.value;
-        let fullAnswer = firstChunk.value.text || "";
+      let fullAnswer = "";
+      let currentMode = "";
+      let hasStartedMessage = false;
 
-        setMessages((prev) => [
-          ...prev,
-          { role: "assistant", content: fullAnswer, mode: initialMode },
-        ]);
+      for await (const obj of generator) {
+        console.log(obj);
+        const { text, mode, firstChunkOfNewMessage } = obj;
 
-        for await (const { text, mode } of generator) {
+        if (!hasStartedMessage || firstChunkOfNewMessage) {
+          // Start a new message for first chunk or when flag is true
+          console.log("new");
+          setMessages((prev) => [
+            ...prev,
+            { role: "assistant", content: text, mode },
+          ]);
+          fullAnswer = text;
+          hasStartedMessage = true;
+          currentMode = mode;
+        } else {
+          // Append to existing message
+          console.log("append");
           fullAnswer += text;
           setMessages((prev) => {
             const newMessages = [...prev];
-            const lastIndex = newMessages.length - 1;
-            newMessages[lastIndex] = {
-              role: "assistant",
+            newMessages[newMessages.length - 1] = {
+              ...newMessages[newMessages.length - 1],
               content: fullAnswer,
-              mode,
             };
             return newMessages;
           });
         }
       }
+
+      setIsLoading(false);
     } catch (error) {
       console.error("Error:", error);
       setMessages((prev) => [
