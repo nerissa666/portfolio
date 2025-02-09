@@ -21,18 +21,21 @@ const MODEL_MAP = {
   "casual chat": "gpt-4o-mini",
 } as const;
 
-const getSystemPrompt = (language: "zh" | "en"): string =>
-  language === "zh"
-    ? "You must speak Chinese. Be informal & concise."
-    : "You must speak English. Be informal & concise.";
+const getSystemPrompt = (language: "zh" | "en"): string => {
+  const prompt = "Be informal & concise.";
+
+  return language === "zh"
+    ? `You must speak Chinese. ${prompt}`
+    : `You must speak English. ${prompt}`;
+};
 
 const selectModelAndMode = async (
   message: string
 ): Promise<[string, ChatMode]> => {
   const wordCount = message.trim().split(/\s+/).length;
 
-  if (wordCount < 3) {
-    return ["gpt-4o-mini", "casual chat"];
+  if (wordCount <= 2) {
+    return ["gpt-4-turbo", "casual chat"];
   }
 
   try {
@@ -78,6 +81,8 @@ export async function* getChatResponse(
       `with "${lastMessage}" ` +
       `using ${modelId} (${selectedMode} mode)`
   );
+
+  yield { text: "\u200B", mode: selectedMode };
 
   while (true) {
     const { done, value } = await reader.read();

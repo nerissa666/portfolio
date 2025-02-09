@@ -1,15 +1,196 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import React from "react";
 import { getChatResponse } from "./chat.action";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import rehypeHighlight from "rehype-highlight";
-import "highlight.js/styles/github-dark.css";
+import { throttle } from "lodash";
+import "katex/dist/katex.min.css";
 
+import ReactMarkdown from "react-markdown";
+import rehypeKatex from "rehype-katex";
+import remarkMath from "remark-math";
+import rehypeHighlight from "rehype-highlight";
+import "highlight.js/styles/github.css";
+import {} from "react-dom";
+
+// Markdown component with memoization since it's pure
+const MarkdownContent = React.memo(({ content }: { content: string }) => {
+  const processedContent = content
+    .replace(/\\\(/g, "$$")
+    .replace(/\\\)/g, "$$")
+    .replace(/\\\[/g, "$$")
+    .replace(/\\\]/g, "$$");
+
+  return (
+    <ReactMarkdown
+      remarkPlugins={[remarkMath]}
+      rehypePlugins={[rehypeKatex, rehypeHighlight]}
+      className="prose max-w-none space-y-4 [&>p]:leading-relaxed [&>*]:font-normal"
+    >
+      {processedContent}
+    </ReactMarkdown>
+  );
+});
+
+// Loading indicator component
+const LoadingDots = () => (
+  <span className="inline-flex items-center">
+    <span className="animate-bounce">.</span>
+    <span className="animate-bounce" style={{ animationDelay: "0.2s" }}>
+      .
+    </span>
+    <span className="animate-bounce" style={{ animationDelay: "0.4s" }}>
+      .
+    </span>
+  </span>
+);
+
+// Language selector component
+const LanguageSelector = React.memo(
+  ({
+    language,
+    onLanguageChange,
+  }: {
+    language: "zh" | "en";
+    onLanguageChange: (lang: "zh" | "en") => void;
+  }) => (
+    <div className="mb-3 flex items-center justify-end gap-2">
+      <label
+        htmlFor="language-select"
+        className="text-sm text-gray-600 font-medium"
+      >
+        Language:
+      </label>
+      <select
+        id="language-select"
+        value={language}
+        onChange={(e) => onLanguageChange(e.target.value as "zh" | "en")}
+        className="text-sm px-3 py-1.5 rounded-md border border-gray-200
+          focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none
+          bg-white hover:border-blue-500 transition-colors text-gray-700
+          cursor-pointer"
+      >
+        <option value="zh">Chinese</option>
+        <option value="en">English</option>
+      </select>
+    </div>
+  )
+);
+
+// Message component
+const Message = React.memo(
+  ({
+    message,
+  }: {
+    message: { role: string; content: string; mode?: string };
+  }) => (
+    <div
+      className={`mb-4 ${message.role === "user" ? "text-right" : "text-left"}`}
+    >
+      <div
+        className={`inline-block max-w-[85%] rounded-2xl px-4 py-3 ${
+          message.role === "user"
+            ? "bg-blue-600 text-white"
+            : "bg-gray-100 text-gray-900"
+        }`}
+      >
+        {message.role === "assistant" && message.mode && (
+          <div className="text-xs text-gray-600 mb-1">
+            {message.mode === "deep reasoning" && "🤔 Deep"}
+            {message.mode === "some reasoning" && "💭 Thinking"}
+            {message.mode === "serious chat" && "💬 Serious"}
+            {message.mode === "casual chat" && "😊 Casual"}
+          </div>
+        )}
+        <div className="prose max-w-none">
+          {message.content !== "\u200B" ? (
+            <MarkdownContent content={message.content} />
+          ) : (
+            <LoadingDots />
+          )}
+        </div>
+      </div>
+    </div>
+  )
+);
+
+// Input form component
+const ChatInput = React.memo(
+  ({
+    input,
+    isLoading,
+    language,
+    inputRef,
+    onInputChange,
+    onSubmit,
+  }: {
+    input: string;
+    isLoading: boolean;
+    language: "zh" | "en";
+    inputRef: React.RefObject<HTMLTextAreaElement>;
+    onInputChange: (value: string) => void;
+    onSubmit: (e: React.FormEvent) => void;
+  }) => (
+    <div className="relative">
+      <textarea
+        ref={inputRef}
+        value={input}
+        onChange={(e) => onInputChange(e.target.value)}
+        placeholder={
+          language === "zh"
+            ? "输入消息...(AI会自动选择模型)"
+            : "Type your message... (AI will pick the best model for you)"
+        }
+        className="w-full rounded-xl border border-gray-300 bg-white px-4 py-2 pr-12 
+          text-gray-900 placeholder-gray-500
+          focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none 
+          resize-none h-[60px]"
+        disabled={isLoading}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            onSubmit(e);
+          }
+        }}
+      />
+      {isLoading ? (
+        <div className="absolute right-3 bottom-3">
+          <div className="animate-spin h-6 w-6 border-2 border-gray-300 rounded-full border-t-gray-600" />
+        </div>
+      ) : (
+        <button
+          type="submit"
+          disabled={isLoading}
+          className="absolute right-3 bottom-3 text-blue-500 hover:text-blue-600 disabled:opacity-50"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth={1.5}
+            stroke="currentColor"
+            className="w-6 h-6"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5"
+            />
+          </svg>
+        </button>
+      )}
+    </div>
+  )
+);
+
+// Main chat interface
 export const ChatInterface = () => {
   const [messages, setMessages] = useState<
-    Array<{ role: string; content: string; mode?: string }>
+    Array<{
+      role: "system" | "user" | "assistant";
+      content: string;
+      mode?: string;
+    }>
   >([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -17,18 +198,18 @@ export const ChatInterface = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+  const scrollToBottom = useRef(
+    throttle(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, 250)
+  ).current;
 
   useEffect(() => {
-    if (!isLoading) {
-      scrollToBottom();
-      if (inputRef.current) {
-        inputRef.current.focus();
-      }
+    scrollToBottom();
+    if (inputRef.current) {
+      inputRef.current.focus();
     }
-  }, [isLoading]);
+  }, [messages]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,31 +219,24 @@ export const ChatInterface = () => {
     const currentMessage = input;
     setInput("");
 
-    // Add user message immediately
     setMessages((prev) => [...prev, { role: "user", content: currentMessage }]);
-
-    // Ensure scroll after adding user message
-    setTimeout(scrollToBottom, 0);
 
     try {
       const generator = await getChatResponse(
-        [...messages, { role: "user", content: currentMessage }],
+        [...messages.slice(-9), { role: "user", content: currentMessage }],
         language
       );
 
-      // Get first chunk to determine mode immediately
       const firstChunk = await generator.next();
       if (!firstChunk.done) {
         const { mode: initialMode } = firstChunk.value;
         let fullAnswer = firstChunk.value.text || "";
 
-        // Add assistant message with empty content but with mode
         setMessages((prev) => [
           ...prev,
           { role: "assistant", content: fullAnswer, mode: initialMode },
         ]);
 
-        // Process remaining chunks
         for await (const { text, mode } of generator) {
           fullAnswer += text;
           setMessages((prev) => {
@@ -75,7 +249,6 @@ export const ChatInterface = () => {
             };
             return newMessages;
           });
-          setTimeout(scrollToBottom, 0);
         }
       }
     } catch (error) {
@@ -93,132 +266,34 @@ export const ChatInterface = () => {
   };
 
   return (
-    <div className="fixed inset-0 flex flex-col">
+    <div className="fixed inset-0 flex flex-col bg-white">
       <div className="flex-1 overflow-hidden">
-        <div className="h-full mx-auto w-full max-w-4xl">
-          <div className="h-full overflow-y-auto p-4 pb-[160px]">
+        <div className="h-full mx-auto w-full max-w-3xl">
+          <div className="h-full overflow-y-auto p-4 pb-[120px]">
             {messages.map((message, index) => (
-              <div
-                key={index}
-                className={`mb-6 ${
-                  message.role === "user" ? "text-right" : "text-left"
-                }`}
-              >
-                <div
-                  className={`inline-block max-w-[80%] rounded-lg px-4 py-2 ${
-                    message.role === "user"
-                      ? "bg-blue-500 text-white"
-                      : "bg-gray-100 text-gray-900"
-                  }`}
-                >
-                  {message.role === "assistant" && message.mode && (
-                    <div className="text-xs text-gray-500 mb-1">
-                      {message.mode === "deep reasoning" && "🤔 Deep"}
-                      {message.mode === "some reasoning" && "💭 Thinking"}
-                      {message.mode === "serious chat" && "💬 Serious"}
-                      {message.mode === "casual chat" && "😊 Casual"}
-                    </div>
-                  )}
-                  <ReactMarkdown
-                    remarkPlugins={[remarkGfm]}
-                    rehypePlugins={[rehypeHighlight]}
-                    className="prose"
-                  >
-                    {message.content || (
-                      <span className="inline-flex items-center">
-                        <span className="animate-bounce">.</span>
-                        <span
-                          className="animate-bounce"
-                          style={{ animationDelay: "0.2s" }}
-                        >
-                          .
-                        </span>
-                        <span
-                          className="animate-bounce"
-                          style={{ animationDelay: "0.4s" }}
-                        >
-                          .
-                        </span>
-                      </span>
-                    )}
-                  </ReactMarkdown>
-                </div>
-              </div>
+              <Message key={index} message={message} />
             ))}
             <div ref={messagesEndRef} />
+            <div className="h-12" />
           </div>
         </div>
       </div>
 
-      <div className="p-4 bg-white border-t fixed bottom-0 left-0 right-0 shadow-lg">
-        <div className="mx-auto w-full max-w-4xl">
+      <div className="p-4 bg-white border-t border-gray-200 fixed bottom-0 left-0 right-0">
+        <div className="mx-auto w-full max-w-3xl">
           <form onSubmit={handleSubmit} className="relative">
-            <div className="mb-3 flex items-center justify-end gap-2">
-              <label
-                htmlFor="language-select"
-                className="text-sm text-gray-600 font-medium"
-              >
-                Language:
-              </label>
-              <select
-                id="language-select"
-                value={language}
-                onChange={(e) => setLanguage(e.target.value as "zh" | "en")}
-                className="text-sm px-3 py-1.5 rounded-md border border-gray-200
-                  focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none
-                  bg-white hover:border-blue-500 transition-colors text-gray-700
-                  cursor-pointer"
-              >
-                <option value="zh">Chinese</option>
-                <option value="en">English</option>
-              </select>
-            </div>
-            <div className="relative">
-              <textarea
-                ref={inputRef}
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder={
-                  language === "zh"
-                    ? "输入消息...(AI会自动选择模型)"
-                    : "Type your message... (AI will pick the best model for you)"
-                }
-                className="w-full rounded-lg border border-gray-300 px-4 py-3 pr-12 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none resize-none h-[100px]"
-                disabled={isLoading}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSubmit(e);
-                  }
-                }}
-              />
-              {isLoading ? (
-                <div className="absolute right-3 bottom-3">
-                  <div className="animate-spin h-6 w-6 border-2 border-gray-300 rounded-full border-t-gray-600" />
-                </div>
-              ) : (
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="absolute right-3 bottom-3 text-blue-500 hover:text-blue-600 disabled:opacity-50"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth={1.5}
-                    stroke="currentColor"
-                    className="w-6 h-6"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5"
-                    />
-                  </svg>
-                </button>
-              )}
-            </div>
+            <LanguageSelector
+              language={language}
+              onLanguageChange={setLanguage}
+            />
+            <ChatInput
+              input={input}
+              isLoading={isLoading}
+              language={language}
+              inputRef={inputRef}
+              onInputChange={setInput}
+              onSubmit={handleSubmit}
+            />
           </form>
         </div>
       </div>
