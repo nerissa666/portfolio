@@ -13,6 +13,7 @@ import remarkMath from "remark-math";
 import rehypeHighlight from "rehype-highlight";
 import "highlight.js/styles/github.css";
 import "./markdown.css";
+import { flushSync } from "react-dom";
 
 // Markdown component with memoization since it's pure
 const MarkdownContent = React.memo(({ content }: { content: string }) => {
@@ -102,8 +103,10 @@ const Message = React.memo(
             <div className="text-xs text-gray-600 mb-1">
               {message.mode === "reasoning" &&
                 (language === "zh" ? "🤔 思考模式" : "🤔 Reasoning")}
-              {message.mode === "chat" &&
+              {message.mode === "casual" &&
                 (language === "zh" ? "💬 聊天模式" : "💬 Chat")}
+              {message.mode === "serious" &&
+                (language === "zh" ? "📝 专业模式" : "📝 Serious")}
             </div>
           )}
           <div className="prose max-w-none">
@@ -241,7 +244,12 @@ export const ChatInterface = () => {
     const currentMessage = input;
     setInput("");
 
-    setMessages((prev) => [...prev, { role: "user", content: currentMessage }]);
+    flushSync(() => {
+      setMessages((prev) => [
+        ...prev,
+        { role: "user", content: currentMessage },
+      ]);
+    });
 
     try {
       const generator = await getChatResponse(
@@ -258,40 +266,45 @@ export const ChatInterface = () => {
         ],
         language
       );
-
+      // Track the full response and current chat mode
       let fullAnswer = "";
-      let currentMode = "";
-      let hasStartedMessage = false;
 
+      // Process each chunk of the streamed response
       for await (const obj of generator) {
         const { text, mode, firstChunkOfNewMessage } = obj;
+        console.log(obj);
 
-        if (!hasStartedMessage || firstChunkOfNewMessage) {
-          // Start a new message for first chunk or when flag is true
-          setMessages((prev) => [
-            ...prev,
-            { role: "assistant", content: text, mode },
-          ]);
+        if (firstChunkOfNewMessage) {
+          // Start a new message when we receive the first chunk
+          flushSync(() => {
+            setMessages((prev) => [
+              ...prev,
+              {
+                role: "assistant",
+                content: text,
+                mode,
+              },
+            ]);
+          });
           fullAnswer = text;
-          hasStartedMessage = true;
-          currentMode = mode;
         } else {
-          // Append to existing message
+          // Append text to existing message
           fullAnswer += text;
-          setMessages((prev) => {
-            const newMessages = [...prev];
-            newMessages[newMessages.length - 1] = {
-              ...newMessages[newMessages.length - 1],
-              content: fullAnswer,
-            };
-            return newMessages;
+          flushSync(() => {
+            setMessages((prev) => {
+              const messages = [...prev];
+              messages[messages.length - 1] = {
+                ...messages[messages.length - 1],
+                content: fullAnswer,
+              };
+              return messages;
+            });
           });
         }
       }
-
-      setIsLoading(false);
     } catch (error) {
       console.error("Error:", error);
+
       setMessages((prev) => [
         ...prev,
         {
@@ -300,7 +313,6 @@ export const ChatInterface = () => {
         },
       ]);
     }
-
     setIsLoading(false);
   };
 

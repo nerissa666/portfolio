@@ -12,32 +12,42 @@ type ChatMode = keyof typeof MODEL_MAP;
 
 const MODEL_MAP = {
   reasoning: "o1-mini",
-  chat: "gpt-4o-mini",
+  casual: "gpt-4o-mini",
+  serious: "gpt-4o",
+} as const;
+
+const CHUNK_INSTRUCTION =
+  "Important: Split your response into 2-3 main chunks using the '🔗' symbol. Each chunk should represent a complete thought or major section. Example: 'Main point with key details🔗Supporting information and conclusion'. Place '🔗' between chunks, never at the start or end. Keep chunks high-level rather than breaking into too many small pieces.";
+
+const MODE_PROMPTS = {
+  reasoning: `${CHUNK_INSTRUCTION} Act as a clear and logical explainer. Focus on step-by-step reasoning and precise explanations. Be concise and avoid unnecessary details. Each chunk should represent one clear logical step or concept.`,
+  casual: `${CHUNK_INSTRUCTION} Be conversational and natural, like chatting with a friend. Keep responses light and engaging. Avoid excessive formality or wordiness. Split into chunks only when it feels natural to pause, like in real conversation.`,
+  serious: `${CHUNK_INSTRUCTION} Provide thorough, well-researched responses with proper depth. Maintain professional tone. Structure your response carefully, using chunks to separate main arguments, supporting evidence, and conclusions.`,
 } as const;
 
 const getSystemPrompt = (language: "zh" | "en", mode: ChatMode): string => {
-  const basePrompt =
-    "To create human-like experience, you must split your response into a few chunks. Each chunk must be separated by exactly one emoji 🔗. For example: 'First chunk🔗Second chunk🔗Third chunk'.";
+  const lang =
+    language === "zh"
+      ? "无论如何必须使用中文回复."
+      : "Must reply in English in any case.";
 
-  const modePrompt =
-    mode === "reasoning"
-      ? "Focus on clear explanations and logical reasoning. Don't be too verbose."
-      : "Be conversational, engaging, and colloquial.";
-
-  return language === "zh"
-    ? `无论如何必须使用中文回复. ${basePrompt} ${modePrompt}`
-    : `Must reply in English in any case. ${basePrompt} ${modePrompt}`;
+  return `${lang} ${MODE_PROMPTS[mode]}`;
 };
 
 const selectModelAndMode = async (
   messages: Message[]
 ): Promise<[string, ChatMode]> => {
   try {
+    const lastMessages = messages
+      .slice(-3)
+      .map((m) => m.content)
+      .join(" CONCAT WITH ");
+
     const lastMessage = messages[messages.length - 1];
 
     const { object: mode } = await generateObject({
       model: openai("gpt-4o-mini"),
-      prompt: `Choose 'reasoning' or 'chat' model based on the message content:
+      prompt: `Choose the most appropriate mode based on the message content:
 
 REASONING for:
 - Math/calculations
@@ -47,12 +57,19 @@ REASONING for:
 - Direct questions
 - Keywords: calculate, solve, explain, why
 
-CHAT for:
+CASUAL for:
 - Open discussions
-- Opinions/advice
-- Creative content
-- Casual conversation
-- Keywords: opinion, creative, chat
+- Light conversations
+- Simple advice
+- Informal chat
+- Keywords: opinion, chat, help
+
+SERIOUS for:
+- Complex discussions
+- Detailed analysis
+- Professional advice
+- In-depth explanations
+- Keywords: analyze, comprehensive, detailed
 
 Analyze:\n"${lastMessage.content}"`,
       output: "enum",
@@ -61,8 +78,8 @@ Analyze:\n"${lastMessage.content}"`,
 
     return [MODEL_MAP[mode as keyof typeof MODEL_MAP], mode as ChatMode];
   } catch (error) {
-    console.error("Error selecting model, defaulting to gpt-4o-mini:", error);
-    return ["gpt-4o-mini", "chat"];
+    console.error("Error selecting model, defaulting to casual:", error);
+    return ["gpt-4o-mini", "casual"];
   }
 };
 
@@ -82,11 +99,11 @@ export async function* getChatResponse(
     await streamText({
       model,
       messages: [
+        ...messages,
         {
           role: "system",
           content: systemPrompt,
         },
-        ...messages,
       ],
     }).textStream
   ).getReader();
@@ -97,46 +114,36 @@ export async function* getChatResponse(
       `with "${lastMessage.content}" ` +
       `using ${modelId} (${selectedMode} mode)`
   );
-  yield { text: "\u200B", mode: selectedMode, firstChunkOfNewMessage: false };
-  let buffer = "";
-  let firstChunkOfNewMessage = false;
+
+  yield { text: "\u200B", mode: selectedMode, firstChunkOfNewMessage: true };
+
   while (true) {
     const { done, value } = await reader.read();
-    if (done) {
-      // Yield any remaining buffer content
-      if (buffer) {
-        yield {
-          text: buffer,
-          mode: selectedMode,
-          firstChunkOfNewMessage,
-        };
-      }
-      break;
+    if (done) break;
+    if (!value.includes("🔗")) {
+      yield { text: value, mode: selectedMode, firstChunkOfNewMessage: false };
+      continue;
     }
 
-    buffer += value;
-
-    while (buffer.includes("🔗")) {
-      // Find the first occurrence of the separator
-      const splitIndex = buffer.indexOf("🔗");
-      const firstPart = buffer.slice(0, splitIndex);
-      const secondPart = buffer.slice(splitIndex + 2); // +2 to skip the emoji and any extra character
-
-      // Yield the first part if it has content
-      if (firstPart) {
-        yield {
-          text: firstPart,
-          mode: selectedMode,
-          firstChunkOfNewMessage,
-        };
-        firstChunkOfNewMessage = false;
-      }
-
-      // Set flag for the next chunk
-      firstChunkOfNewMessage = true;
-
-      // Update buffer with remaining content after removing emoji
-      buffer = secondPart.trim();
+    const [beforeSymbol, afterSymbol] = value.split("🔗");
+    if (beforeSymbol === "" && afterSymbol === "") {
+      yield {
+        text: "",
+        mode: selectedMode,
+        firstChunkOfNewMessage: true,
+      };
+    } else if (beforeSymbol) {
+      yield {
+        text: beforeSymbol,
+        mode: selectedMode,
+        firstChunkOfNewMessage: false,
+      };
+    } else if (afterSymbol) {
+      yield {
+        text: afterSymbol,
+        mode: selectedMode,
+        firstChunkOfNewMessage: true,
+      };
     }
   }
 }
