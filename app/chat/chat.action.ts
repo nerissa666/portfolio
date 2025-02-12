@@ -99,19 +99,20 @@ export async function* getChatResponse(
     await streamText({
       model,
       messages: [
-        ...messages,
         {
           role: "system",
           content: systemPrompt,
         },
+        ...messages,
       ],
     }).textStream
   ).getReader();
+
   console.log(
-    `Replied to "${
+    `replied "${
       messages[messages.length - 2]?.content || "None - first message"
     }" ` +
-      `with "${lastMessage.content}" ` +
+      `to "${lastMessage.content}" ` +
       `using ${modelId} (${selectedMode} mode)`
   );
 

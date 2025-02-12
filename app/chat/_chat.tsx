@@ -59,7 +59,7 @@ const LanguageSelector = React.memo(
     <div className="mb-3 flex items-center justify-end gap-2">
       <label
         htmlFor="language-select"
-        className="text-sm text-gray-600 font-medium"
+        className="text-sm text-gray-300 font-medium"
       >
         {language === "zh" ? "语言：" : "Language:"}
       </label>
@@ -96,20 +96,22 @@ const Message = React.memo(
       >
         <div
           className={`max-w-[85%] rounded-2xl px-4 py-3 text-left ${
-            message.role === "user" ? "bg-blue-100" : "bg-gray-100"
+            message.role === "user"
+              ? "bg-blue-600 text-gray-50"
+              : "bg-gray-700/50 text-gray-50"
           }`}
         >
           {message.role === "assistant" && message.mode && (
-            <div className="text-xs text-gray-600 mb-1">
+            <div className="text-xs text-gray-400 mb-1">
               {message.mode === "reasoning" &&
-                (language === "zh" ? "🤔 思考模式" : "🤔 Reasoning")}
+                (language === "zh" ? "分析模式" : "Analytical")}
               {message.mode === "casual" &&
-                (language === "zh" ? "💬 聊天模式" : "💬 Chat")}
+                (language === "zh" ? "对话模式" : "Conversational")}
               {message.mode === "serious" &&
-                (language === "zh" ? "📝 专业模式" : "📝 Serious")}
+                (language === "zh" ? "专业模式" : "Professional")}
             </div>
           )}
-          <div className="prose max-w-none">
+          <div className="prose prose-invert max-w-none prose-pre:bg-gray-800/50">
             {message.content !== "\u200B" ? (
               <MarkdownContent content={message.content} />
             ) : (
@@ -149,9 +151,9 @@ const ChatInput = React.memo(
             ? "输入消息...(AI会自动选择模型)"
             : "Type your message... (AI will pick the best model for you)"
         }
-        className="w-full rounded-xl border border-gray-300 bg-white px-4 py-2 pr-12 
-          text-gray-900 placeholder-gray-500
-          focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none 
+        className="w-full rounded-xl border border-gray-600 bg-gray-800/50 px-4 py-2 pr-12 
+          text-gray-100 placeholder-gray-400
+          focus:border-blue-400 focus:ring-1 focus:ring-blue-400 focus:outline-none 
           resize-none h-[60px]"
         disabled={isLoading}
         onKeyDown={(e) => {
@@ -272,7 +274,6 @@ export const ChatInterface = () => {
       // Process each chunk of the streamed response
       for await (const obj of generator) {
         const { text, mode, firstChunkOfNewMessage } = obj;
-        console.log(obj);
 
         if (firstChunkOfNewMessage) {
           // Start a new message when we receive the first chunk
@@ -317,11 +318,11 @@ export const ChatInterface = () => {
   };
 
   return (
-    <div className="fixed inset-0 flex flex-col bg-white">
+    <div className="fixed inset-0 flex flex-col bg-gray-950">
       <div className="flex-1 overflow-hidden">
         <div className="h-full mx-auto w-full max-w-3xl">
           <div
-            className="h-full overflow-y-auto p-4 pb-[50vh]"
+            className="h-full overflow-y-auto p-4 pb-[50vh] text-gray-100"
             ref={messagesContainerRef}
           >
             {messages.map((message, index) => (
@@ -332,7 +333,7 @@ export const ChatInterface = () => {
         </div>
       </div>
 
-      <div className="p-4 bg-white border-t border-gray-200 fixed bottom-0 left-0 right-0">
+      <div className="p-4 bg-gray-950 border-t border-gray-800 fixed bottom-0 left-0 right-0">
         <div className="mx-auto w-full max-w-3xl">
           <form onSubmit={handleSubmit} className="relative">
             <LanguageSelector
