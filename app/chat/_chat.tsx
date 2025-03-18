@@ -3,7 +3,6 @@
 import { useState, useRef, useEffect } from "react";
 import React from "react";
 import { getChatResponse } from "./chat.action";
-import { throttle } from "lodash";
 import "katex/dist/katex.min.css";
 import { useSearchParams } from "next/navigation";
 
@@ -33,6 +32,8 @@ const MarkdownContent = React.memo(({ content }: { content: string }) => {
     </ReactMarkdown>
   );
 });
+
+MarkdownContent.displayName = "MarkdownContent";
 
 // Loading indicator component
 const LoadingDots = () => (
@@ -79,6 +80,8 @@ const LanguageSelector = React.memo(
   )
 );
 
+LanguageSelector.displayName = "LanguageSelector";
+
 // Message component
 const Message = React.memo(
   ({
@@ -123,6 +126,8 @@ const Message = React.memo(
     </div>
   )
 );
+
+Message.displayName = "Message";
 
 // Input form component
 const ChatInput = React.memo(
@@ -193,6 +198,8 @@ const ChatInput = React.memo(
   )
 );
 
+ChatInput.displayName = "ChatInput";
+
 // Main chat interface
 export const ChatInterface = () => {
   const searchParams = useSearchParams();
@@ -230,7 +237,7 @@ export const ChatInterface = () => {
     if (isLoading) {
       scrollToBottom();
     }
-  }, [isLoading]);
+  }, [isLoading, scrollToBottom]);
 
   useEffect(() => {
     if (inputRef.current && isLoading == false) {
@@ -344,7 +351,7 @@ export const ChatInterface = () => {
               input={input}
               isLoading={isLoading}
               language={language}
-              inputRef={inputRef}
+              inputRef={inputRef as React.RefObject<HTMLTextAreaElement>}
               onInputChange={setInput}
               onSubmit={handleSubmit}
             />

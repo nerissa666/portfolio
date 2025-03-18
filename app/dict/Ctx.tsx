@@ -10,13 +10,13 @@ import {
 } from "react";
 import { useSearchParams } from "next/navigation";
 type CtxType = {
-  ref: React.RefObject<HTMLFormElement>;
+  ref: React.RefObject<HTMLFormElement | null>;
 };
 
 const Ctx = createContext<CtxType | null>(null);
 
 export function CtxProvider({ children }: { children: ReactNode }) {
-  const ref = useRef<HTMLFormElement>(null);
+  const ref = useRef<HTMLFormElement | null>(null);
 
   return <Ctx.Provider value={{ ref }}>{children}</Ctx.Provider>;
 }
