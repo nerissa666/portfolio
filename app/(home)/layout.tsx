@@ -1,5 +1,8 @@
+import { Providers } from "@/components/ui/providers";
 import { Header } from "./header";
+
 import { Menu } from "./menu";
+import { ThemeToggleHeader } from "@/components/ui/theme-toggle-header";
 
 export default function HomeLayout({
   children,
@@ -7,7 +10,9 @@ export default function HomeLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div>
+    <Providers>
+      <ThemeToggleHeader />
+
       <div className="absolute top-0 left-0 w-full">
         <Header />
       </div>
@@ -17,6 +22,6 @@ export default function HomeLayout({
       </div>
 
       <Menu />
-    </div>
+    </Providers>
   );
 }

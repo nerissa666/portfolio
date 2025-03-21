@@ -52,6 +52,23 @@ export default function Page() {
             <path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z" />
           </svg>
         </a>
+
+        {/* Cal.com Icon */}
+        <a
+          href="https://cal.com/jude-gao-ymrglb/30min"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Schedule a meeting"
+          className="touch-manipulation"
+        >
+          <svg
+            className="w-8 h-8 sm:w-10 sm:h-10 text-black dark:text-white hover:opacity-75 transition-opacity"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+          >
+            <path d="M12 0C5.376 0 0 5.376 0 12s5.376 12 12 12 12-5.376 12-12S18.624 0 12 0Zm0 19.2a7.2 7.2 0 1 1 0-14.4 7.2 7.2 0 0 1 0 14.4Zm.6-6.6V6h-1.2v7.2l5.4 3.132.6-1.032-4.8-2.7Z" />
+          </svg>
+        </a>
       </div>
     </div>
   );
