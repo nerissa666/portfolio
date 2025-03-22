@@ -1,4 +1,4 @@
-import { Providers } from "@/components/ui/providers";
+import { ThemeProvider } from "next-themes";
 import { Header } from "./header";
 
 import { Menu } from "./menu";
@@ -10,7 +10,7 @@ export default function HomeLayout({
   children: React.ReactNode;
 }) {
   return (
-    <Providers>
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <ThemeToggleHeader />
 
       <div className="absolute top-0 left-0 w-full">
@@ -22,6 +22,6 @@ export default function HomeLayout({
       </div>
 
       <Menu />
-    </Providers>
+    </ThemeProvider>
   );
 }
