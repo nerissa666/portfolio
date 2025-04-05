@@ -1,8 +1,5 @@
 "use server";
 
-import { LanguageModelV1 } from "ai";
-
-import { deepseek } from "@ai-sdk/deepseek";
 import { streamText } from "ai";
 import { Message } from "./types";
 import { openai } from "@ai-sdk/openai";
@@ -18,6 +15,17 @@ const getTextStream = async (messages: Message[]) => {
 
 export const getAssitantMessageContentStream = async (
   messages: Message[]
-): Promise<AsyncIterable<string>> => {
-  return await getTextStream(messages);
+): Promise<AsyncGenerator<string>> => {
+  const textStream = await getTextStream(messages);
+  const reader = textStream.getReader();
+
+  async function* generateText() {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      yield value;
+    }
+  }
+
+  return generateText();
 };
