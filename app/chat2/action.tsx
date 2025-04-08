@@ -4,6 +4,8 @@ import { LanguageModelV1, streamText } from "ai";
 import { Message } from "./types";
 import { openai } from "@ai-sdk/openai";
 import { deepseek } from "@ai-sdk/deepseek";
+import { Suspense } from "react";
+import { WithIncreaseFontSize } from "./client-button";
 
 const getTextStreamFromChatgpt = async (messages: Message[]) => {
   const { textStream } = await streamText({
@@ -43,4 +45,39 @@ export const getAssitantMessageContentStream = async (
   }
 
   return generateText();
+};
+
+export const getMessageReactNode = async (message: Message) => {
+  return (
+    <WithIncreaseFontSize>
+      <Suspense fallback={<div>Loading...</div>}>
+        <StreamableDeepseekReply message={message} />
+      </Suspense>
+    </WithIncreaseFontSize>
+  );
+};
+
+const StreamableDeepseekReply = async ({ message }: { message: Message }) => {
+  return (
+    <StreamableRenderFromAsyncGenerator
+      g={await getAssitantMessageContentStream([message])}
+    />
+  );
+};
+
+const StreamableRenderFromAsyncGenerator = async ({
+  g,
+}: {
+  g: AsyncGenerator<string>;
+}) => {
+  const { done, value } = await g.next();
+  if (done) return <>{value}</>;
+  return (
+    <>
+      {value}
+      <Suspense fallback={<div>...</div>}>
+        <StreamableRenderFromAsyncGenerator g={g} />
+      </Suspense>
+    </>
+  );
 };

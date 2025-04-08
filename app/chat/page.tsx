@@ -1,12 +1,22 @@
 "use client";
 
-import { useEffect, useOptimistic, useRef, useState } from "react";
+import { useEffect, useOptimistic, useRef } from "react";
 import { getAssitantMessageContentStream } from "./actions";
-import { Message } from "./types";
 import { useFormStatus } from "react-dom";
+import { useMessages } from "./use-messages";
+import dynamic from "next/dynamic";
+
+// Once we replace the local storage with
+const LazyRenderMessages = dynamic(
+  () => import("./render-messages").then((mod) => mod.RenderMessages),
+  {
+    ssr: false,
+  }
+);
 
 export default function Chat() {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useMessages();
+
   const [optimisticMessages, setOptimisticMessages] = useOptimistic(messages);
   const formRef = useRef<HTMLFormElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -20,40 +30,11 @@ export default function Chat() {
     <div className="min-h-screen bg-[#1a1d21]">
       <div className="mx-auto max-w-[1028px] px-4 min-h-screen flex flex-col bg-[#1a1d21] w-full">
         <div className="flex-1 space-y-4 my-4 overflow-y-auto">
-          {optimisticMessages.map((message, index) => (
-            <div
-              key={index}
-              className={`flex ${
-                message.role === "assistant" ? "justify-start" : "justify-end"
-              }`}
-            >
-              <div
-                className={`rounded-lg px-4 py-2 max-w-[80%] ${
-                  message.role === "assistant"
-                    ? "bg-[#2c2d30] text-white"
-                    : "bg-[#007a5a] text-white"
-                }`}
-              >
-                <div className="whitespace-pre-wrap break-words">
-                  {message.content}
-                  {message.isOptimistic && (
-                    <span className="ml-1">
-                      <span className="inline-block animate-[bounce_1s_infinite_0ms]">
-                        .
-                      </span>
-                      <span className="inline-block animate-[bounce_1s_infinite_200ms]">
-                        .
-                      </span>
-                      <span className="inline-block animate-[bounce_1s_infinite_400ms]">
-                        .
-                      </span>
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-          ))}
-          <div ref={bottomRef}></div>
+          <LazyRenderMessages
+            className="flex-1 space-y-4 my-4 overflow-y-auto"
+            messages={optimisticMessages}
+            bottomRef={bottomRef}
+          />
         </div>
 
         <form
