@@ -74,7 +74,6 @@ const StreamableRenderFromAsyncGenerator = async ({
   if (done) return <>{value}</>;
   return (
     <>
-      {value}
       <Suspense fallback={<div>...</div>}>
         <StreamableRenderFromAsyncGenerator g={g} />
       </Suspense>
