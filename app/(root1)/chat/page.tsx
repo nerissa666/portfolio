@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useOptimistic, useRef } from "react";
-import { getAssitantMessageContentStream } from "./actions";
+
 import { useFormStatus } from "react-dom";
 import { useMessages } from "./use-messages";
 import dynamic from "next/dynamic";
+import { getAssistantMessageContentStream } from "./actions";
 
 // Once we replace the local storage with
 const LazyRenderMessages = dynamic(
@@ -66,7 +67,10 @@ export default function Chat() {
             });
 
             const assitantMessageContentStream =
-              await getAssitantMessageContentStream([...messages, userMessage]);
+              await getAssistantMessageContentStream([
+                ...messages,
+                userMessage,
+              ]);
 
             let assistantMessageContent = "";
             for await (const assitantMessageContentChunk of assitantMessageContentStream) {

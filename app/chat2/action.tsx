@@ -1,13 +1,13 @@
 "use server";
 
-import { LanguageModelV1, streamText } from "ai";
+import { streamText } from "ai";
 import { Message } from "./types";
 import { openai } from "@ai-sdk/openai";
-import { deepseek } from "@ai-sdk/deepseek";
-import { Suspense } from "react";
-import { WithIncreaseFontSize } from "./client-button";
+import { ReactNode, Suspense } from "react";
+import { GET_NEXT_STATE } from "./GET_NEXT_STATE";
+import { State } from "./GET_NEXT_STATE";
 
-const getTextStreamFromChatgpt = async (messages: Message[]) => {
+const getTextStream = async (messages: Message[]) => {
   const { textStream } = await streamText({
     model: openai("gpt-4o"),
     messages,
@@ -16,21 +16,7 @@ const getTextStreamFromChatgpt = async (messages: Message[]) => {
   return textStream;
 };
 
-const getTextStreamFromDeepseek = async (messages: Message[]) => {
-  const { textStream } = await streamText({
-    model: deepseek("deepseek-chat") as LanguageModelV1,
-    messages,
-  });
-
-  return textStream;
-};
-
-const getTextStream =
-  process.env.NODE_ENV === "development"
-    ? getTextStreamFromDeepseek
-    : getTextStreamFromChatgpt;
-
-export const getAssitantMessageContentStream = async (
+const getAssistantMessageContentStream = async (
   messages: Message[]
 ): Promise<AsyncGenerator<string>> => {
   const textStream = await getTextStream(messages);
@@ -49,34 +35,67 @@ export const getAssitantMessageContentStream = async (
 
 export const getMessageReactNode = async (message: Message) => {
   return (
-    <WithIncreaseFontSize>
-      <Suspense fallback={<div>Loading...</div>}>
-        <StreamableDeepseekReply message={message} />
-      </Suspense>
-    </WithIncreaseFontSize>
+    <Suspense fallback={<div>Loading...</div>}>
+      <StreamableRenderFromMessage message={message} />
+    </Suspense>
   );
 };
 
-const StreamableDeepseekReply = async ({ message }: { message: Message }) => {
-  return (
-    <StreamableRenderFromAsyncGenerator
-      g={await getAssitantMessageContentStream([message])}
-    />
-  );
-};
-
-const StreamableRenderFromAsyncGenerator = async ({
-  g,
+const StreamableRenderFromMessage = async ({
+  message,
 }: {
-  g: AsyncGenerator<string>;
+  message: Message;
 }) => {
-  const { done, value } = await g.next();
-  if (done) return <>{value}</>;
-  return (
-    <>
-      <Suspense fallback={<div>...</div>}>
-        <StreamableRenderFromAsyncGenerator g={g} />
-      </Suspense>
-    </>
-  );
+  const generator = await getAssistantMessageContentStream([message]);
+  let remainingChars = "";
+  // TODO: instead of getting next char, which turns every single
+  // char into a react node, we should get the next token
+  const getNextChar = async (): Promise<string | null> => {
+    if (remainingChars.length > 0) {
+      const nextChar = remainingChars[0];
+      remainingChars = remainingChars.slice(1);
+      return nextChar;
+    }
+
+    const { done, value } = await generator.next();
+    if (done) return null;
+
+    if (value.length > 1) {
+      remainingChars = value.slice(1);
+      return value[0];
+    }
+    return value;
+  };
+
+  let buffer: ReactNode = null;
+  let currentState: State = "INITIAL";
+  // let debugBuffer = "";
+
+  const RecursivelyRender = async () => {
+    const nextChar = await getNextChar();
+    // debugBuffer += nextChar;
+    const nextState = GET_NEXT_STATE(currentState, nextChar, buffer);
+    buffer = nextState.nextBuffer;
+    currentState = nextState.nextState;
+
+    if (currentState === "COMPLETED") {
+      // console.log({ debugBuffer });
+      return <>{nextState.flushPayload}</>;
+    }
+    if (nextState.flushPayload) {
+      return (
+        <>
+          {nextState.flushPayload}
+          <Suspense fallback={<div>...</div>}>
+            <RecursivelyRender />
+          </Suspense>
+        </>
+      );
+    } else {
+      // BUFFER
+      return <RecursivelyRender />;
+    }
+  };
+
+  return <RecursivelyRender />;
 };

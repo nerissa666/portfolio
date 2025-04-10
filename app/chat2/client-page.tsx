@@ -12,12 +12,9 @@ export default function ClientPage({
 
   const handleSubmit = async () => {
     if (!inputValue.trim()) return;
-
     const message = { role: "user", content: inputValue } as const;
     const newNode = await getMessageReactNode(message);
-
     setMessages((prev) => [...prev, newNode]);
-    setInputValue("");
   };
 
   return (
