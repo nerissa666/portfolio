@@ -69,17 +69,14 @@ const StreamableRenderFromMessage = async ({
 
   let buffer: ReactNode = null;
   let currentState: State = "INITIAL";
-  // let debugBuffer = "";
 
   const RecursivelyRender = async () => {
     const nextChar = await getNextChar();
-    // debugBuffer += nextChar;
     const nextState = GET_NEXT_STATE(currentState, nextChar, buffer);
     buffer = nextState.nextBuffer;
     currentState = nextState.nextState;
 
     if (currentState === "COMPLETED") {
-      // console.log({ debugBuffer });
       return <>{nextState.flushPayload}</>;
     }
     if (nextState.flushPayload) {
