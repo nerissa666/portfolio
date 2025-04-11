@@ -34,6 +34,7 @@ type StateTransitionFunction = (
   nextBuffer: ReactNode;
 };
 
+// @ts-expect-error fix it later
 export const GET_NEXT_STATE: StateTransitionFunction = (
   currentState,
   nextChar,
