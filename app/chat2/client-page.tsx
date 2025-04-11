@@ -1,6 +1,7 @@
 "use client";
-import { ReactNode, useState } from "react";
+import { ReactNode, useState, useEffect } from "react";
 import { Message } from "./types";
+import { getTextStreamFromMongodb } from "./action";
 
 export default function ClientPage({
   getMessageReactNode,
@@ -16,7 +17,13 @@ export default function ClientPage({
     const newNode = await getMessageReactNode(message);
     setMessages((prev) => [...prev, newNode]);
   };
-
+  useEffect(() => {
+    const loadData = async () => {
+      const newNode = await getTextStreamFromMongodb();
+      setMessages((prev) => [...prev, ...newNode]);
+    };
+    loadData();
+  }, []);
   return (
     <div className="p-4">
       <div className="flex gap-2 mb-4">
