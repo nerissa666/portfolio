@@ -29,6 +29,9 @@ export default function ClientPage({
           onChange={(e) => setInputValue(e.target.value)}
           className="flex-1 px-3 py-2 border rounded"
           placeholder="Type a message..."
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && inputValue) handleSubmit();
+          }}
         />
         <button
           onClick={handleSubmit}

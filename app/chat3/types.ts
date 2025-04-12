@@ -12,3 +12,10 @@ export type Buffer = {
   tagName: string | ReactNode; // HTML TAG
   classNames: string;
 };
+
+export type Roles = {
+  TAG: string;
+  SINGLE: boolean | "3";
+  TAGNAME: string | string[];
+  CLASSNAME: string;
+};

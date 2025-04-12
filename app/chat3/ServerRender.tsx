@@ -1,6 +1,7 @@
 import React, { Suspense } from "react";
 import { Message } from "./types";
 import { getAssitantMessageContentStream } from "./action";
+import { ROLES_LIST } from "./md-roles";
 export const StreamableRenderFromAsyncGenerator = async ({
   message,
   text = "", //缓存text
@@ -8,7 +9,7 @@ export const StreamableRenderFromAsyncGenerator = async ({
   curSingle = "3",
   curTag = "", // MARKDOWN TAG
   curTagName = "", // HTML TAG
-  classNames = "",
+  curClass = "",
 }: {
   message: Message;
   text?: string; //缓存text
@@ -16,7 +17,8 @@ export const StreamableRenderFromAsyncGenerator = async ({
   curSingle?: boolean | "3";
   curTag?: string; // MARKDOWN TAG
   curTagName?: string; // HTML TAG
-  classNames?: string;
+  curClass?: string;
+  preClass?: string;
 }) => {
   const g = await getAssitantMessageContentStream([message]);
 
@@ -29,7 +31,8 @@ export const StreamableRenderFromAsyncGenerator = async ({
     curTag,
     preTagName,
     curTagName,
-    classNames,
+    curClass,
+    preClass,
   }: {
     text: string;
     state: boolean;
@@ -37,15 +40,22 @@ export const StreamableRenderFromAsyncGenerator = async ({
     curSingle: boolean | "3";
     preTag: string;
     curTag: string;
-    preTagName: string;
-    curTagName: string;
-    classNames: string;
+    preTagName: string | Array<string>;
+    curTagName: string | Array<string>;
+    curClass?: string;
+    preClass?: string;
     value: string;
   }) => {
     if (state) {
       if (preSingle) {
         const node = preTagName
-          ? React.createElement(preTagName, null, text)
+          ? Array.isArray(preTagName)
+            ? React.createElement(
+                preTagName[0],
+                { className: preClass },
+                React.createElement(preTagName[1], null, text)
+              )
+            : React.createElement(preTagName, { className: preClass }, text)
           : text;
         return (
           <>
@@ -57,15 +67,25 @@ export const StreamableRenderFromAsyncGenerator = async ({
                 preSingle={curSingle}
                 preTag={curTag}
                 preTagName={curTagName}
-                classNames={classNames}
+                preClass={curClass}
               />
             </Suspense>
           </>
         );
       } else {
         // 判断是否相等
-        if (preTag === curTag) {
-          const node = React.createElement(preTagName, null, text);
+        if (
+          preTag === curTag ||
+          preTag === curTag.split("").reverse().join("")
+        ) {
+          // console.log(preTag, curTag.split("").reverse().join(""));
+          const node = Array.isArray(preTagName)
+            ? React.createElement(
+                preTagName[0],
+                { className: preClass },
+                React.createElement(preTagName[1], null, text)
+              )
+            : React.createElement(preTagName, { className: preClass }, text);
           return (
             <>
               <Suspense fallback={<div>...</div>}>
@@ -76,7 +96,7 @@ export const StreamableRenderFromAsyncGenerator = async ({
                   preSingle={"3"}
                   preTag={""}
                   preTagName={""}
-                  classNames={""}
+                  preClass={""}
                 />
               </Suspense>
             </>
@@ -92,7 +112,7 @@ export const StreamableRenderFromAsyncGenerator = async ({
                   preSingle={curSingle}
                   preTag={curTag}
                   preTagName={curTagName}
-                  classNames={classNames}
+                  preClass={curClass}
                 />
               </Suspense>
             </>
@@ -109,7 +129,7 @@ export const StreamableRenderFromAsyncGenerator = async ({
               preSingle={curSingle}
               preTag={curTag}
               preTagName={curTagName}
-              classNames={classNames}
+              preClass={curClass}
             />
           </Suspense>
         </>
@@ -125,7 +145,8 @@ export const StreamableRenderFromAsyncGenerator = async ({
     curTag = "",
     preTagName,
     curTagName = "",
-    classNames = "",
+    curClass = "",
+    preClass = "",
   }: {
     text: string;
     state: boolean;
@@ -133,19 +154,18 @@ export const StreamableRenderFromAsyncGenerator = async ({
     curSingle?: boolean | "3";
     preTag: string;
     curTag?: string;
-    preTagName: string;
-    curTagName?: string;
-    classNames: string;
+    preTagName: string | string[];
+    curTagName?: string | string[];
+    curClass?: string;
+    preClass?: string;
   }) => {
     const { done, value } = await g.next();
     if (done) return <>{value}</>;
-    switch (value.trim()) {
-      // 单标识
-      case "#":
-        console.log(1111);
-        console.log(state);
-        [curSingle, curTagName, curTag, classNames] = [true, "h1", "#", ""];
-        return State_Machine({
+    const mapActions = new Map();
+    ROLES_LIST.map((item) => {
+      mapActions.set(
+        item.TAG,
+        ({
           text,
           state,
           preSingle,
@@ -154,363 +174,63 @@ export const StreamableRenderFromAsyncGenerator = async ({
           curTag,
           preTagName,
           curTagName,
-          classNames,
+          curClass,
+          preClass,
           value,
-        });
-      case "##":
-        [curSingle, curTagName, curTag, classNames] = [true, "h2", "##", ""];
-        return State_Machine({
-          text,
-          state,
-          preSingle,
-          curSingle,
-          preTag,
-          curTag,
-          preTagName,
-          curTagName,
-          classNames,
-          value,
-        });
-      case "###":
-        [curSingle, curTagName, curTag, classNames] = [true, "h3", "###", ""];
-        return State_Machine({
-          text,
-          state,
-          preSingle,
-          curSingle,
-          preTag,
-          curTag,
-          preTagName,
-          curTagName,
-          classNames,
-          value,
-        });
-      case "####":
-        [curSingle, curTagName, curTag, classNames] = [true, "h4", "####", ""];
-        return State_Machine({
-          text,
-          state,
-          preSingle,
-          curSingle,
-          preTag,
-          curTag,
-          preTagName,
-          curTagName,
-          classNames,
-          value,
-        });
-      case "#####":
-        [curSingle, curTagName, curTag, classNames] = [true, "h5", "#####", ""];
-        return State_Machine({
-          text,
-          state,
-          preSingle,
-          curSingle,
-          preTag,
-          curTag,
-          preTagName,
-          curTagName,
-          classNames,
-          value,
-        });
-      case "######":
-        [curSingle, curTagName, curTag, classNames] = [
-          true,
-          "p",
-          "######",
-          "p-h6",
-        ];
-        return State_Machine({
-          text,
-          state,
-          preSingle,
-          curSingle,
-          preTag,
-          curTag,
-          preTagName,
-          curTagName,
-          classNames,
-          value,
-        });
-      case `-`: // 无序列表
-        [curSingle, curTagName, curTag, classNames] = [true, "ul", `-`, ""];
-        return State_Machine({
-          text,
-          state,
-          preSingle,
-          curSingle,
-          preTag,
-          curTag,
-          preTagName,
-          curTagName,
-          classNames,
-          value,
-        });
-      case `*`:
-        [curSingle, curTagName, curTag, classNames] = [true, "ul", `*`, ""];
-        return State_Machine({
-          text,
-          state,
-          preSingle,
-          curSingle,
-          preTag,
-          curTag,
-          preTagName,
-          curTagName,
-          classNames,
-          value,
-        });
-      case `+`:
-        [curSingle, curTagName, curTag, classNames] = [true, "ul", `+`, ""];
-        return State_Machine({
-          text,
-          state,
-          preSingle,
-          curSingle,
-          preTag,
-          curTag,
-          preTagName,
-          curTagName,
-          classNames,
-          value,
-        });
-      case `\t-`: // 无序子列表
-        [curSingle, curTagName, curTag, classNames] = [
-          true,
-          "li",
-          `\t-`,
-          "li-sub",
-        ];
-        return State_Machine({
-          text,
-          state,
-          preSingle,
-          curSingle,
-          preTag,
-          curTag,
-          preTagName,
-          curTagName,
-          classNames,
-          value,
-        });
-      case `\t*`:
-        [curSingle, curTagName, curTag, classNames] = [
-          true,
-          "li",
-          `\t*`,
-          "li-sub",
-        ];
-        return State_Machine({
-          text,
-          state,
-          preSingle,
-          curSingle,
-          preTag,
-          curTag,
-          preTagName,
-          curTagName,
-          classNames,
-          value,
-        });
-      case `\t+`:
-        [curSingle, curTagName, curTag, classNames] = [
-          true,
-          "li",
-          `\t+`,
-          "li-sub",
-        ];
-        return State_Machine({
-          text,
-          state,
-          preSingle,
-          curSingle,
-          preTag,
-          curTag,
-          preTagName,
-          curTagName,
-          classNames,
-          value,
-        });
-      case "1.": // 有序列表
-        [curSingle, curTagName, curTag, classNames] = [true, "ol", "1.", ""];
-        return State_Machine({
-          text,
-          state,
-          preSingle,
-          curSingle,
-          preTag,
-          curTag,
-          preTagName,
-          curTagName,
-          classNames,
-          value,
-        });
-      case `2.`:
-        [curSingle, curTagName, curTag, classNames] = [true, "ol", `2.`, ""];
-        return State_Machine({
-          text,
-          state,
-          preSingle,
-          curSingle,
-          preTag,
-          curTag,
-          preTagName,
-          curTagName,
-          classNames,
-          value,
-        });
-      case `3.`:
-        [curSingle, curTagName, curTag, classNames] = [true, "ol", `3.`, ""];
-        return State_Machine({
-          text,
-          state,
-          preSingle,
-          curSingle,
-          preTag,
-          curTag,
-          preTagName,
-          curTagName,
-          classNames,
-          value,
-        });
-      case "\t1.": // 有序子列表
-        [curSingle, curTagName, curTag, classNames] = [
-          true,
-          "li",
-          "\t1.",
-          "li-ol",
-        ];
-        return State_Machine({
-          text,
-          state,
-          preSingle,
-          curSingle,
-          preTag,
-          curTag,
-          preTagName,
-          curTagName,
-          classNames,
-          value,
-        });
-      case `\t.`:
-        [curSingle, curTagName, curTag, classNames] = [
-          true,
-          "li",
-          `\t.`,
-          "li-ol",
-        ];
-        return State_Machine({
-          text,
-          state,
-          preSingle,
-          curSingle,
-          preTag,
-          curTag,
-          preTagName,
-          curTagName,
-          classNames,
-          value,
-        });
-      case `\t3.`:
-        [curSingle, curTagName, curTag, classNames] = [
-          true,
-          "li",
-          `\t3.`,
-          "li-ol",
-        ];
-        return State_Machine({
-          text,
-          state,
-          preSingle,
-          curSingle,
-          preTag,
-          curTag,
-          preTagName,
-          curTagName,
-          classNames,
-          value,
-        });
-      case `>`: // 引用
-        [curSingle, curTagName, curTag, classNames] = [
-          true,
-          "p",
-          `>`,
-          "p-quote",
-        ];
-        return State_Machine({
-          text,
-          state,
-          preSingle,
-          curSingle,
-          preTag,
-          curTag,
-          preTagName,
-          curTagName,
-          classNames,
-          value,
-        });
-      case "> >": // 嵌套的引用
-        [curSingle, curTagName, curTag, classNames] = [
-          true,
-          "p",
-          "> >",
-          "p-quote",
-        ];
-        return State_Machine({
-          text,
-          state,
-          preSingle,
-          curSingle,
-          preTag,
-          curTag,
-          preTagName,
-          curTagName,
-          classNames,
-          value,
-        });
-      case "*": // 倾斜
-        [curSingle, curTagName, curTag, classNames] = [false, "i", "*", ""];
-        return State_Machine({
-          text,
-          state,
-          preSingle,
-          curSingle,
-          preTag,
-          curTag,
-          preTagName,
-          curTagName,
-          classNames,
-          value,
-        });
-      case "_": // 倾斜
-        [curSingle, curTagName, curTag, classNames] = [false, "i", "_", ""];
-        return State_Machine({
-          text,
-          state,
-          preSingle,
-          curSingle,
-          preTag,
-          curTag,
-          preTagName,
-          curTagName,
-          classNames,
-          value,
-        });
-      case "**": // 加粗
-        [curSingle, curTagName, curTag, classNames] = [false, "b", "**", ""];
-        return State_Machine({
-          text,
-          state,
-          preSingle,
-          curSingle,
-          preTag,
-          curTag,
-          preTagName,
-          curTagName,
-          classNames,
-          value,
-        });
-      default:
+        }: {
+          text: string;
+          state: boolean;
+          preSingle: boolean | "3";
+          curSingle?: boolean | "3";
+          preTag: string;
+          curTag?: string;
+          preTagName: string | string[];
+          curTagName?: string | string[];
+          curClass?: string;
+          preClass?: string;
+          value: string;
+        }) => {
+          [curSingle, curTagName, curTag, curClass] = [
+            item.SINGLE,
+            item.TAGNAME,
+            item.TAG,
+            item.CLASSNAME,
+          ];
+          return State_Machine({
+            text,
+            state,
+            preSingle,
+            curSingle,
+            preTag,
+            curTag,
+            preTagName,
+            curTagName,
+            curClass,
+            preClass,
+            value,
+          });
+        }
+      );
+    });
+    mapActions.set(
+      "default",
+      ({
+        state,
+        value,
+        text,
+        preSingle,
+        preTag,
+        preTagName,
+        preClass,
+      }: {
+        state: boolean;
+        value: string;
+        text: string;
+        preSingle: boolean | "3";
+        preTag: string;
+        preTagName: string | string[];
+        preClass: string;
+      }) => {
         if (state) {
           text += value;
         }
@@ -524,22 +244,38 @@ export const StreamableRenderFromAsyncGenerator = async ({
                 preSingle={preSingle}
                 preTag={preTag}
                 preTagName={preTagName}
-                classNames={classNames}
+                preClass={preClass}
               />
             </Suspense>
           </>
         );
-    }
+      }
+    );
+    return (mapActions.get(value) || mapActions.get("default"))({
+      curSingle,
+      curTagName,
+      curTag,
+      curClass,
+      state,
+      value,
+      text,
+      preSingle,
+      preTag,
+      preTagName,
+      preClass,
+    });
   };
 
   return (
-    <RenderInterator
-      text={text}
-      state={state}
-      preSingle={curSingle}
-      preTag={curTag}
-      preTagName={curTagName}
-      classNames={classNames}
-    />
+    <Suspense fallback={<div>...</div>}>
+      <RenderInterator
+        text={text}
+        state={state}
+        preSingle={curSingle}
+        preTag={curTag}
+        preTagName={curTagName}
+        preClass={curClass}
+      />
+    </Suspense>
   );
 };
