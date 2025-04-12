@@ -1,17 +1,8 @@
-import { ReactNode } from "react";
 export interface Message {
   role: "user" | "assistant";
   content: string;
   isOptimistic?: boolean;
 }
-export type Buffer = {
-  text: string; //缓存text
-  state: boolean; // 是否开启缓存
-  single: boolean;
-  tag: string | ReactNode; // MARKDOWN TAG
-  tagName: string | ReactNode; // HTML TAG
-  classNames: string;
-};
 
 export type Roles = {
   TAG: string;
@@ -19,3 +10,21 @@ export type Roles = {
   TAGNAME: string | string[];
   CLASSNAME: string;
 };
+
+export interface Params {
+  text?: string; //缓存text
+  state?: boolean; // 是否开启缓存
+  curSingle?: boolean | "3";
+  curTag?: string; // MARKDOWN TAG
+  curTagName?: string | string[]; // HTML TAG
+  curClass?: string;
+  preClass?: string;
+  preSingle?: boolean | "3";
+  preTag?: string;
+  preTagName?: string | string[];
+  value?: string;
+}
+
+export interface MB extends Params {
+  message: Message;
+}

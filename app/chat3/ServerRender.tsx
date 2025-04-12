@@ -1,7 +1,8 @@
 import React, { Suspense } from "react";
-import { Message } from "./types";
+import { Params, MB } from "./types";
 import { getAssitantMessageContentStream } from "./action";
 import { ROLES_LIST } from "./md-roles";
+
 export const StreamableRenderFromAsyncGenerator = async ({
   message,
   text = "", //缓存text
@@ -10,20 +11,11 @@ export const StreamableRenderFromAsyncGenerator = async ({
   curTag = "", // MARKDOWN TAG
   curTagName = "", // HTML TAG
   curClass = "",
-}: {
-  message: Message;
-  text?: string; //缓存text
-  state?: boolean; // 是否开启缓存
-  curSingle?: boolean | "3";
-  curTag?: string; // MARKDOWN TAG
-  curTagName?: string; // HTML TAG
-  curClass?: string;
-  preClass?: string;
-}) => {
+}: MB) => {
   const g = await getAssitantMessageContentStream([message]);
 
   const State_Machine = ({
-    text,
+    text = "",
     state,
     preSingle,
     curSingle,
@@ -33,19 +25,7 @@ export const StreamableRenderFromAsyncGenerator = async ({
     curTagName,
     curClass,
     preClass,
-  }: {
-    text: string;
-    state: boolean;
-    preSingle: boolean | "3";
-    curSingle: boolean | "3";
-    preTag: string;
-    curTag: string;
-    preTagName: string | Array<string>;
-    curTagName: string | Array<string>;
-    curClass?: string;
-    preClass?: string;
-    value: string;
-  }) => {
+  }: Params) => {
     if (state) {
       if (preSingle) {
         const node = preTagName
@@ -76,7 +56,7 @@ export const StreamableRenderFromAsyncGenerator = async ({
         // 判断是否相等
         if (
           preTag === curTag ||
-          preTag === curTag.split("").reverse().join("")
+          preTag === curTag?.split("").reverse().join("")
         ) {
           // console.log(preTag, curTag.split("").reverse().join(""));
           const node = Array.isArray(preTagName)
@@ -85,7 +65,8 @@ export const StreamableRenderFromAsyncGenerator = async ({
                 { className: preClass },
                 React.createElement(preTagName[1], null, text)
               )
-            : React.createElement(preTagName, { className: preClass }, text);
+            : preTagName &&
+              React.createElement(preTagName, { className: preClass }, text);
           return (
             <>
               <Suspense fallback={<div>...</div>}>
@@ -147,18 +128,7 @@ export const StreamableRenderFromAsyncGenerator = async ({
     curTagName = "",
     curClass = "",
     preClass = "",
-  }: {
-    text: string;
-    state: boolean;
-    preSingle: boolean | "3";
-    curSingle?: boolean | "3";
-    preTag: string;
-    curTag?: string;
-    preTagName: string | string[];
-    curTagName?: string | string[];
-    curClass?: string;
-    preClass?: string;
-  }) => {
+  }: Params) => {
     const { done, value } = await g.next();
     if (done) return <>{value}</>;
     const mapActions = new Map();
@@ -177,19 +147,7 @@ export const StreamableRenderFromAsyncGenerator = async ({
           curClass,
           preClass,
           value,
-        }: {
-          text: string;
-          state: boolean;
-          preSingle: boolean | "3";
-          curSingle?: boolean | "3";
-          preTag: string;
-          curTag?: string;
-          preTagName: string | string[];
-          curTagName?: string | string[];
-          curClass?: string;
-          preClass?: string;
-          value: string;
-        }) => {
+        }: Params) => {
           [curSingle, curTagName, curTag, curClass] = [
             item.SINGLE,
             item.TAGNAME,
@@ -217,20 +175,12 @@ export const StreamableRenderFromAsyncGenerator = async ({
       ({
         state,
         value,
-        text,
+        text = "",
         preSingle,
         preTag,
         preTagName,
         preClass,
-      }: {
-        state: boolean;
-        value: string;
-        text: string;
-        preSingle: boolean | "3";
-        preTag: string;
-        preTagName: string | string[];
-        preClass: string;
-      }) => {
+      }: Params) => {
         if (state) {
           text += value;
         }
