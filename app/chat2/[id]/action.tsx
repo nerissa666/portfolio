@@ -1,10 +1,11 @@
 "use server";
 
 import { streamText } from "ai";
-import { Message } from "./types";
+import { Message } from "../types";
 import { openai } from "@ai-sdk/openai";
 import { ReactNode, Suspense } from "react";
 import { compiler } from "markdown-to-jsx";
+import prisma from "@/app/db/prisma";
 
 const getTextStream = async (messages: Message[]) => {
   const { textStream } = await streamText({
@@ -15,18 +16,37 @@ const getTextStream = async (messages: Message[]) => {
   return textStream;
 };
 
-const messages: Message[] = [];
-const getMessages = async () => {
-  return messages;
+const getMessages = async (conversationId: string): Promise<Message[]> => {
+  const messages = await prisma.message.findMany({
+    where: { conversationId },
+    orderBy: { createdAt: "asc" },
+  });
+  return messages.map((msg) => {
+    if (msg.role !== "user" && msg.role !== "assistant") {
+      throw new Error(`Invalid role: ${msg.role}`);
+    }
+    return {
+      role: msg.role,
+      content: msg.content,
+    };
+  });
 };
-const addMessage = async (message: Message) => {
-  messages.push(message);
+
+const addMessage = async (conversationId: string, message: Message) => {
+  await prisma.message.create({
+    data: {
+      role: message.role,
+      content: message.content,
+      conversationId,
+    },
+  });
 };
 
 export const getMessageReactNode = async (
+  conversationId: string,
   message: Message
 ): Promise<ReactNode> => {
-  await addMessage(message);
+  await addMessage(conversationId, message);
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
       <div
@@ -47,7 +67,7 @@ export const getMessageReactNode = async (
         }}
       >
         <Suspense fallback={<Spinner />}>
-          <GenerateAssistantReply />
+          <GenerateAssistantReply conversationId={conversationId} />
         </Suspense>
       </div>
     </div>
@@ -116,12 +136,20 @@ const generateBlocksForMarkdownParser = async function* (messages: Message[]) {
   }
 };
 
-const GenerateAssistantReply = async () => {
-  const messages = await getMessages();
+const GenerateAssistantReply = async ({
+  conversationId,
+}: {
+  conversationId: string;
+}) => {
+  const messages = await getMessages(conversationId);
   const generateBlocks = await generateBlocksForMarkdownParser(messages);
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-      <StreamableParse generateBlocks={generateBlocks} buffer="" />
+      <StreamableParse
+        generateBlocks={generateBlocks}
+        buffer=""
+        conversationId={conversationId}
+      />
     </div>
   );
 };
@@ -129,13 +157,15 @@ const GenerateAssistantReply = async () => {
 const StreamableParse = async ({
   generateBlocks,
   buffer,
+  conversationId,
 }: {
   generateBlocks: AsyncGenerator<string>;
   buffer: string;
+  conversationId: string;
 }) => {
   const { done, value: block } = await generateBlocks.next();
   if (done) {
-    await addMessage({
+    await addMessage(conversationId, {
       role: "assistant",
       content: buffer,
     });
@@ -151,6 +181,7 @@ const StreamableParse = async ({
         <StreamableParse
           generateBlocks={generateBlocks}
           buffer={buffer + "\n\n" + block}
+          conversationId={conversationId}
         />
       </Suspense>
     </>
@@ -161,8 +192,10 @@ const ParseToMarkdown = ({ block }: { block: string }) => {
   return compiler(block, { wrapper: null });
 };
 
-export const getInitialMessagesReactNode = async (): Promise<ReactNode> => {
-  const messages = await getMessages();
+export const getInitialMessagesReactNode = async (
+  conversationId: string
+): Promise<ReactNode> => {
+  const messages = await getMessages(conversationId);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>

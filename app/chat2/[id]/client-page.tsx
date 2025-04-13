@@ -1,12 +1,17 @@
 "use client";
 import { ReactNode, useState } from "react";
-import { Message } from "./types";
+import { Message } from "../types";
 
 export default function ClientPage({
+  conversationId,
   getMessageReactNode,
   initialMessagesReactNode,
 }: {
-  getMessageReactNode: (message: Message) => Promise<ReactNode>;
+  conversationId: string;
+  getMessageReactNode: (
+    conversationId: string,
+    message: Message
+  ) => Promise<ReactNode>;
   initialMessagesReactNode: ReactNode;
 }) {
   const [inputValue, setInputValue] = useState("");
@@ -17,7 +22,7 @@ export default function ClientPage({
   const handleSubmit = async () => {
     if (!inputValue.trim()) return;
     const message = { role: "user", content: inputValue } as const;
-    const newNode = await getMessageReactNode(message);
+    const newNode = await getMessageReactNode(conversationId, message);
     setMessages((prev) => [...prev, newNode]);
     setInputValue("");
   };

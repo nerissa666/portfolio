@@ -1,11 +1,13 @@
-import { getInitialMessagesReactNode, getMessageReactNode } from "./action";
-import ClientPage from "./client-page";
+import { redirect } from "next/navigation";
+import prisma from "@/app/db/prisma";
+import { connection } from "next/server";
 
 export default async function Page() {
-  return (
-    <ClientPage
-      getMessageReactNode={getMessageReactNode}
-      initialMessagesReactNode={await getInitialMessagesReactNode()}
-    />
-  );
+  await connection();
+
+  const conversation = await prisma.conversation.create({
+    data: {},
+  });
+
+  redirect(`/chat2/${conversation.id}`);
 }
