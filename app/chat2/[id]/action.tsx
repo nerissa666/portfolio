@@ -4,10 +4,18 @@ import { streamText } from "ai";
 import { Message } from "../types";
 import { openai } from "@ai-sdk/openai";
 import { ReactNode, Suspense } from "react";
-import { compiler } from "markdown-to-jsx";
 import prisma from "@/app/db/prisma";
+import { Spinner } from "./spinner";
+import {
+  AssistantMessageWrapper,
+  ParseToMarkdown,
+  UserMessageWrapper,
+} from "./render-message";
+import { createMarkdownBlockGeneratorFromLlmReader } from "./parser";
+import { DeleteAllNodesWithMessageId } from "./delete-all-nodes-with-message-id";
 
-const getTextStream = async (messages: Message[]) => {
+////////// data source
+const getLlmTextStream = async (messages: Message[]) => {
   const { textStream } = await streamText({
     model: openai("gpt-4o"),
     messages,
@@ -42,214 +50,117 @@ const addMessage = async (conversationId: string, message: Message) => {
   });
 };
 
+//////////
+/**
+ * Client appends a new user message for a specific conversation.
+ * Server sends the chat history + the new message to the LLM.
+ *
+ * This action returns new messages back to client in a streamable fashion:
+ * 1. It immediately returns a new user message, reiterating the received message.
+ * 2. It then streams the LLM response, appending to the response buffer.
+ */
 export const getMessageReactNode = async (
   conversationId: string,
-  message: Message
+  message: Message // new message from user
 ): Promise<ReactNode> => {
+  // add the user meesage to DB
   await addMessage(conversationId, message);
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-      <div
-        style={{
-          backgroundColor: "#f3f4f6",
-          padding: "1rem",
-          borderRadius: "0.5rem",
-        }}
-      >
-        <div>{message.content}</div>
-      </div>
-      <div
-        style={{
-          backgroundColor: "white",
-          padding: "1rem",
-          borderRadius: "0.5rem",
-          border: "1px solid #e5e7eb",
-        }}
-      >
-        <Suspense fallback={<Spinner />}>
-          <GenerateAssistantReply conversationId={conversationId} />
-        </Suspense>
-      </div>
-    </div>
-  );
-};
 
-// A new block is typically separated by a newline, unless
-// it's inside a code block, in which case the whole code block
-// is considered a single block.
-// This function yields a single block at a time from the AI's response.
-const generateBlocksForMarkdownParser = async function* (messages: Message[]) {
-  const textStream = await getTextStream(messages);
-  const reader = textStream.getReader();
+  const StreamAssistantMessage = async () => {
+    // Create empty message first
+    const newMessageId = await prisma.message
+      .create({
+        data: {
+          role: "assistant",
+          content: "",
+          conversationId,
+        },
+      })
+      .then((msg) => msg.id);
 
-  // We maintain state about the current block being built and whether we're in a code block
-  let currentBlock = "";
-  let insideCodeBlock = false;
+    // For a new message to LLM, you need to send all previous messages
+    const llmReader = (
+      await getLlmTextStream(await getMessages(conversationId))
+    ).getReader();
 
-  // Example input stream:
-  // "Here is some text\n```js\nconst x = 1;\n```\nMore text"
-  // Will yield blocks:
-  // 1. "Here is some text"
-  // 2. "```js\nconst x = 1;\n```"
-  // 3. "More text"
+    // wait until the llmReader outputs a newline
+    // we define the parts separated by newlines as "blocks"
+    // this is like a transform stream that converts the
+    // LLM stream into a stream of blocks
+    const generateBlocks = createMarkdownBlockGeneratorFromLlmReader(llmReader);
 
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-
-    // Process each character individually
-    for (const char of value) {
-      if (char === "`" && currentBlock.endsWith("``")) {
-        // Found a code block marker
-        if (insideCodeBlock) {
-          // Closing code block
-          currentBlock += char;
-          yield currentBlock;
-          currentBlock = "";
-          insideCodeBlock = false;
-        } else {
-          // Opening code block
-          // First yield any accumulated regular text
-          if (currentBlock && !currentBlock.endsWith("``")) {
-            yield currentBlock;
-            currentBlock = "";
-          }
-          currentBlock += char;
-          insideCodeBlock = true;
-        }
-      } else if (char === "\n" && !insideCodeBlock) {
-        // Line break outside code block - yield current block
-        if (currentBlock) {
-          yield currentBlock;
-          currentBlock = "";
-        }
-      } else {
-        // Add character to current block
-        currentBlock += char;
+    const StreamableParse = async ({
+      accumulator = "",
+    }: {
+      accumulator?: string;
+    }) => {
+      const { done, value: block } = await generateBlocks.next();
+      if (done) {
+        // Update the empty message with final content
+        await prisma.message.update({
+          where: { id: newMessageId },
+          data: { content: accumulator },
+        });
+        return (
+          <>
+            <DeleteAllNodesWithMessageId messageId={newMessageId.toString()} />
+            <ParseToMarkdown block={accumulator} />
+          </>
+        );
       }
-    }
-  }
 
-  // Yield final block if anything remains
-  if (currentBlock) {
-    yield currentBlock;
-  }
-};
+      return (
+        <>
+          <ParseToMarkdown
+            data-message-id={newMessageId.toString()}
+            block={block}
+          />
+          <Suspense
+            fallback={
+              <>
+                <Spinner />
+                <div className="h-12"></div>
+              </>
+            }
+          >
+            <StreamableParse accumulator={accumulator + "\n" + block} />
+          </Suspense>
+        </>
+      );
+    };
 
-const GenerateAssistantReply = async ({
-  conversationId,
-}: {
-  conversationId: string;
-}) => {
-  const messages = await getMessages(conversationId);
-  const generateBlocks = await generateBlocksForMarkdownParser(messages);
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-      <StreamableParse
-        generateBlocks={generateBlocks}
-        buffer=""
-        conversationId={conversationId}
-      />
-    </div>
-  );
-};
-
-const StreamableParse = async ({
-  generateBlocks,
-  buffer,
-  conversationId,
-}: {
-  generateBlocks: AsyncGenerator<string>;
-  buffer: string;
-  conversationId: string;
-}) => {
-  const { done, value: block } = await generateBlocks.next();
-  if (done) {
-    await addMessage(conversationId, {
-      role: "assistant",
-      content: buffer,
-    });
-    return;
-  }
+    return <StreamableParse />;
+  };
 
   return (
     <>
-      <div>
-        <ParseToMarkdown block={block} />
-      </div>
-      <Suspense fallback={<Spinner />}>
-        <StreamableParse
-          generateBlocks={generateBlocks}
-          buffer={buffer + "\n\n" + block}
-          conversationId={conversationId}
-        />
-      </Suspense>
+      <UserMessageWrapper>{message.content}</UserMessageWrapper>
+      <AssistantMessageWrapper>
+        <Suspense fallback={<Spinner />}>
+          <StreamAssistantMessage />
+        </Suspense>
+      </AssistantMessageWrapper>
     </>
   );
-};
-
-const ParseToMarkdown = ({ block }: { block: string }) => {
-  return compiler(block, { wrapper: null });
 };
 
 export const getInitialMessagesReactNode = async (
   conversationId: string
 ): Promise<ReactNode> => {
   const messages = await getMessages(conversationId);
-
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-      {messages.map((message, index) => (
-        <div key={index}>
-          {message.role === "user" ? (
-            <div
-              style={{
-                backgroundColor: "#f3f4f6",
-                padding: "1rem",
-                borderRadius: "0.5rem",
-              }}
-            >
-              <div>{message.content}</div>
-            </div>
-          ) : (
-            <div
-              style={{
-                backgroundColor: "white",
-                padding: "1rem",
-                borderRadius: "0.5rem",
-                border: "1px solid #e5e7eb",
-              }}
-            >
-              <ParseToMarkdown block={message.content} />
-            </div>
-          )}
-        </div>
-      ))}
-    </div>
-  );
-};
-
-const Spinner = () => {
   return (
     <>
-      <style>
-        {`
-          @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-          }
-        `}
-      </style>
-      <div
-        style={{
-          animation: "spin 0.5s linear infinite",
-          borderRadius: "50%",
-          height: "1rem",
-          width: "1rem",
-          border: "2px solid #d1d5db",
-          borderTopColor: "#4b5563",
-        }}
-      />
+      {messages.map((message, index) =>
+        message.role === "user" ? (
+          <UserMessageWrapper key={index}>
+            <div>{message.content}</div>
+          </UserMessageWrapper>
+        ) : (
+          <AssistantMessageWrapper key={index}>
+            <ParseToMarkdown block={message.content} />
+          </AssistantMessageWrapper>
+        )
+      )}
     </>
   );
 };
