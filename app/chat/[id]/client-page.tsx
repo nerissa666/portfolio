@@ -79,9 +79,46 @@ export default function ClientPage({
     };
   }, []);
 
+  useEffect(() => {
+    textareaRef.current?.focus();
+  }, []);
+
   return (
-    <div className="flex flex-col h-screen">
-      <div className="flex flex-col gap-4">{messages}</div>
+    <div className="flex flex-col">
+      <div className="flex flex-col gap-4">
+        {messages.length === 0 ||
+        (Array.isArray(messages[0]) &&
+          messages.length === 1 &&
+          messages[0].length === 0) ? (
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <h1 className="text-2xl font-bold text-gray-900 mb-4">
+              Welcome to Fast Chat
+            </h1>
+            <div className="text-gray-600 max-w-md mb-8">
+              <p>Start a conversation by typing a message below.</p>
+              <p>Use Shift + Enter to quickly send messages.</p>
+            </div>
+            <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+              </svg>
+              <span>Powered by GPT-4o</span>
+            </div>
+          </div>
+        ) : (
+          messages
+        )}
+      </div>
       {showScrollButton && (
         <ScrollToBottomButton
           onClick={() => {

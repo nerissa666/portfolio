@@ -27,12 +27,12 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-grey-50`}
       >
         <nav className="sticky top-0 border-b bg-gray-900 z-10">
-          <div className="max-w-7xl mx-auto px-4 py-4">
+          <div className="max-w-5xl mx-auto px-4 py-4">
             <Link
-              href="/chat2"
+              href="/chat"
               className="flex items-center gap-2 text-white hover:text-gray-300"
             >
               <svg
@@ -53,9 +53,7 @@ export default function RootLayout({
             </Link>
           </div>
         </nav>
-        <div className="w-full bg-gray-50">
-          <div className="max-w-7xl mx-auto p-12">{children}</div>
-        </div>
+        <div className="max-w-5xl mx-auto p-12">{children}</div>
       </body>
     </html>
   );

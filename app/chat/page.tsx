@@ -27,7 +27,7 @@ const NewChat = () => {
           const conversation = await prisma.conversation.create({
             data: {},
           });
-          redirect(`/chat2/${conversation.id}`);
+          redirect(`/chat/${conversation.id}`);
         }}
       >
         <button
@@ -77,7 +77,7 @@ const ListConversations = async () => {
         {conversations.map((conversation) => (
           <div key={conversation.id} className="relative">
             <Link
-              href={`/chat2/${conversation.id}`}
+              href={`/chat/${conversation.id}`}
               className="block p-6 bg-white rounded-xl border border-gray-200 hover:border-indigo-500 hover:shadow-lg transition-all duration-200"
             >
               <div className="flex items-start space-x-4">
@@ -120,7 +120,7 @@ const ListConversations = async () => {
                 await prisma.conversation.delete({
                   where: { id: conversation.id },
                 });
-                revalidatePath("/chat2");
+                revalidatePath("/chat");
               }}
               className="absolute top-2 right-2"
             >

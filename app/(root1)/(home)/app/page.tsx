@@ -13,10 +13,7 @@ export default function Page() {
         <LineItemHeading>
           <Link href="/chat">𝐹𝒶𝓈𝓉 Chat</Link>
         </LineItemHeading>
-        <LineItemSubheading>
-          Intelligent AI chat that automatically selects the optimal model for
-          your queries
-        </LineItemSubheading>
+        <LineItemSubheading>Server-driven markdown parsing</LineItemSubheading>
       </LineItemContainer>
 
       <LineItemContainer>
