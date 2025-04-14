@@ -98,22 +98,6 @@ export default function ClientPage({
               <p>Start a conversation by typing a message below.</p>
               <p>Use Shift + Enter to quickly send messages.</p>
             </div>
-            <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-              </svg>
-              <span>Powered by GPT-4o</span>
-            </div>
           </div>
         ) : (
           messages

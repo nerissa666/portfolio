@@ -53,7 +53,7 @@ export default function RootLayout({
             </Link>
           </div>
         </nav>
-        <div className="max-w-5xl mx-auto p-12">{children}</div>
+        <div className="max-w-5xl mx-auto p-2 md:p-12">{children}</div>
       </body>
     </html>
   );
