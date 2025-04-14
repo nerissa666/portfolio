@@ -50,9 +50,6 @@ importers:
       lucide-react:
         specifier: ^0.447.0
         version: 0.447.0(react@19.0.0)
-      markdown-to-jsx:
-        specifier: ^7.7.4
-        version: 7.7.4(react@19.0.0)
       marked:
         specifier: ^15.0.6
         version: 15.0.6
@@ -1703,12 +1700,6 @@ packages:
 
   markdown-table@3.0.4:
     resolution: {integrity: sha512-wiYz4+JrLyb/DqW2hkFJxP7Vd7JuTDm77fvbM8VfEQdmSMqcImWeeRbHwZjBjIFki/VaMK2BhFi7oUUZeM5bqw==}
-
-  markdown-to-jsx@7.7.4:
-    resolution: {integrity: sha512-1bSfXyBKi+EYS3YY+e0Csuxf8oZ3decdfhOav/Z7Wrk89tjudyL5FOmwZQUoy0/qVXGUl+6Q3s2SWtpDEWITfQ==}
-    engines: {node: '>= 10'}
-    peerDependencies:
-      react: '>= 0.14.0'
 
   marked-katex-extension@5.1.4:
     resolution: {integrity: sha512-GQOio4vCp0laxB1IY+2oNVo5nbn82yWMDP/jILRYHmyu2WXMVlXCB+krq2/U2fQn+V9j8aqDmnNdrsgqG2AkGQ==}
@@ -4278,10 +4269,6 @@ snapshots:
       react: 19.0.0
 
   markdown-table@3.0.4: {}
-
-  markdown-to-jsx@7.7.4(react@19.0.0):
-    dependencies:
-      react: 19.0.0
 
   marked-katex-extension@5.1.4(katex@0.16.21)(marked@15.0.6):
     dependencies:
