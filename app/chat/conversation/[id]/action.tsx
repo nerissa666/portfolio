@@ -1,7 +1,7 @@
 "use server";
 
 import { streamText } from "ai";
-import { Message } from "../types";
+import { Message } from "../../types";
 import { openai } from "@ai-sdk/openai";
 import { ReactNode, Suspense } from "react";
 import prisma from "@/app/db/prisma";

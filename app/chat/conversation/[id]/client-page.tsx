@@ -1,6 +1,6 @@
 "use client";
 import { ReactNode, useState, useEffect, useRef } from "react";
-import { Message } from "../types";
+import { Message } from "../../types";
 import { RenderFromPending } from "./render-from-pending";
 
 const ScrollToBottomButton = ({ onClick }: { onClick: () => void }) => (
