@@ -34,7 +34,7 @@ export default function RootLayout({
 }>) {
   return (
     <Suspense>
-      <ClerkProvider>
+      <ClerkProvider afterSignOutUrl="/chat">
         <html lang="en" suppressHydrationWarning>
           <head>
             <meta
@@ -69,7 +69,7 @@ export default function RootLayout({
                 </Link>
                 <div className="flex items-center gap-4 text-white">
                   <SignedIn>
-                    <UserButton signInUrl="/chat" />
+                    <UserButton />
                   </SignedIn>
                 </div>
               </div>

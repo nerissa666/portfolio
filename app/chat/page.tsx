@@ -14,7 +14,7 @@ export default async function Page() {
     redirect("/chat/login");
   }
 
-  const user = await currentUser();
+  // const user = await currentUser();
 
   return (
     <>
