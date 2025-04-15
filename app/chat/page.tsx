@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { revalidatePath } from "next/cache";
 import { RenderFromPending } from "./conversation/[id]/render-from-pending";
-import { auth, currentUser } from "@clerk/nextjs/server";
+import { auth } from "@clerk/nextjs/server";
 
 export default async function Page() {
   const { userId } = await auth();
@@ -14,19 +14,17 @@ export default async function Page() {
     redirect("/chat/login");
   }
 
-  // const user = await currentUser();
-
   return (
     <>
-      <NewChat />
+      <NewChat userId={userId} />
       <Suspense fallback={<ConversationsLoadingSkeleton />}>
-        <ListConversations />
+        <ListConversations userId={userId} />
       </Suspense>
     </>
   );
 }
 
-const NewChat = () => {
+const NewChat = ({ userId }: { userId: string }) => {
   return (
     <div className="flex justify-between items-center mb-8">
       <h1 className="text-2xl font-bold text-gray-900">My Conversations</h1>
@@ -34,7 +32,7 @@ const NewChat = () => {
         action={async () => {
           "use server";
           const conversation = await prisma.conversation.create({
-            data: {},
+            data: { userId },
           });
           redirect(`/chat/conversation/${conversation.id}`);
         }}
@@ -65,8 +63,11 @@ const NewChat = () => {
   );
 };
 
-const ListConversations = async () => {
+const ListConversations = async ({ userId }: { userId: string }) => {
   const conversations = await prisma.conversation.findMany({
+    where: {
+      userId,
+    },
     include: {
       messages: {
         take: 1,
@@ -76,7 +77,7 @@ const ListConversations = async () => {
       },
     },
     orderBy: {
-      createdAt: "desc",
+      updatedAt: "desc",
     },
   });
 
