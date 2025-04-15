@@ -1,12 +1,21 @@
 import { redirect } from "next/navigation";
 import prisma from "@/app/db/prisma";
-import { SpinnerInForm } from "./[id]/spinner";
+import { SpinnerInForm } from "./conversation/[id]/spinner";
 import Link from "next/link";
 import { Suspense } from "react";
 import { revalidatePath } from "next/cache";
-import { RenderFromPending } from "./[id]/render-from-pending";
+import { RenderFromPending } from "./conversation/[id]/render-from-pending";
+import { auth, currentUser } from "@clerk/nextjs/server";
 
 export default async function Page() {
+  const { userId } = await auth();
+
+  if (!userId) {
+    redirect("/chat/login");
+  }
+
+  const user = await currentUser();
+
   return (
     <>
       <NewChat />
@@ -20,14 +29,14 @@ export default async function Page() {
 const NewChat = () => {
   return (
     <div className="flex justify-between items-center mb-8">
-      <h1 className="text-2xl font-bold text-gray-900">All Conversations</h1>
+      <h1 className="text-2xl font-bold text-gray-900">My Conversations</h1>
       <form
         action={async () => {
           "use server";
           const conversation = await prisma.conversation.create({
             data: {},
           });
-          redirect(`/chat/${conversation.id}`);
+          redirect(`/chat/conversation/${conversation.id}`);
         }}
       >
         <button
@@ -77,7 +86,7 @@ const ListConversations = async () => {
         {conversations.map((conversation) => (
           <div key={conversation.id} className="relative">
             <Link
-              href={`/chat/${conversation.id}`}
+              href={`/chat/conversation/${conversation.id}`}
               className="block p-6 bg-white rounded-xl border border-gray-200 hover:border-indigo-500 hover:shadow-lg transition-all duration-200"
             >
               <div className="flex items-start space-x-4">
