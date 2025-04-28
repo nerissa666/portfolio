@@ -13,6 +13,7 @@ import {
 } from "./render-message";
 import { createMarkdownBlockGeneratorFromLlmReader } from "./parser";
 import { DeleteAllNodesWithMessageId } from "./delete-all-nodes-with-message-id";
+import { after } from "next/server";
 
 ////////// data source
 const getLlmTextStream = async (messages: Message[]) => {
@@ -25,6 +26,7 @@ const getLlmTextStream = async (messages: Message[]) => {
 };
 
 const getMessages = async (conversationId: string): Promise<Message[]> => {
+  // TODO: add a Redis caching here to boost perf
   const messages = await prisma.message.findMany({
     where: { conversationId },
     orderBy: { createdAt: "asc" },
@@ -63,24 +65,15 @@ export const getMessageReactNode = async (
   conversationId: string,
   message: Message // new message from user
 ): Promise<ReactNode> => {
-  // add the user meesage to DB
-  await addMessage(conversationId, message);
-
   const StreamAssistantMessage = async () => {
-    // Create empty message first
-    const newMessageId = await prisma.message
-      .create({
-        data: {
-          role: "assistant",
-          content: "",
-          conversationId,
-        },
-      })
-      .then((msg) => msg.id);
+    const newMessageId = crypto.randomUUID();
 
     // For a new message to LLM, you need to send all previous messages
+    // Perf bottleneck: await getMessages(conversationId)
     const llmReader = (
-      await getLlmTextStream(await getMessages(conversationId))
+      await getLlmTextStream(
+        (await getMessages(conversationId)).concat(message)
+      )
     ).getReader();
 
     // wait until the llmReader outputs a newline
@@ -96,11 +89,18 @@ export const getMessageReactNode = async (
     }) => {
       const { done, value: block } = await generateBlocks.next();
       if (done) {
-        // Update the empty message with final content
-        await prisma.message.update({
-          where: { id: newMessageId },
-          data: { content: accumulator },
+        after(async () => {
+          await addMessage(conversationId, message);
+
+          await prisma.message.create({
+            data: {
+              role: "assistant",
+              content: accumulator,
+              conversationId,
+            },
+          });
         });
+
         return (
           <>
             <DeleteAllNodesWithMessageId messageId={newMessageId.toString()} />
