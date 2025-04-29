@@ -1,14 +1,26 @@
 import { ParamsType } from "./calculator";
 
-export const Calculator = async ({ args }: { args: ParamsType }) => {
+export const Calculator = async ({
+  args,
+  saveToolCallResult,
+}: {
+  args: ParamsType;
+  saveToolCallResult: (result: number) => void;
+}) => {
   return (
     <div>
-      <CalculatorBase args={args} />
+      <CalculatorBase args={args} saveToolCallResult={saveToolCallResult} />
     </div>
   );
 };
 
-const CalculatorBase = async ({ args }: { args: ParamsType }) => {
+const CalculatorBase = async ({
+  args,
+  saveToolCallResult,
+}: {
+  args: ParamsType;
+  saveToolCallResult: (result: number) => void;
+}) => {
   const { a, b, operation } = args;
   let result: number;
   let operationSymbol: string;
@@ -34,6 +46,8 @@ const CalculatorBase = async ({ args }: { args: ParamsType }) => {
       result = a + b;
       operationSymbol = "+";
   }
+
+  await saveToolCallResult(result);
 
   return (
     <div className="p-4 border rounded-md bg-gray-900 shadow-md animate-fadeIn max-w-xs">

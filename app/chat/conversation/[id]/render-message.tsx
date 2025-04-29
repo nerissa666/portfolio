@@ -32,6 +32,22 @@ export const AssistantMessageWrapper = ({
   );
 };
 
+export const ToolCallWrapper = ({
+  children,
+}: {
+  children: React.ReactNode;
+}) => {
+  return (
+    <div className="bg-amber-50 p-6 rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-200 border border-amber-100">
+      <div className="flex items-start gap-3">
+        <div className="markdown-content prose prose-amber prose-sm max-w-none">
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export const ParseToMarkdown = async ({
   block,
   "data-message-id": messageId,

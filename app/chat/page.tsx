@@ -186,6 +186,9 @@ const ConversationPreview = async ({
   conversationId: string;
 }) => {
   const message = await getFirstMessageOfConversation(conversationId);
+  if (message?.role !== "user" || typeof message?.content !== "string") {
+    return null;
+  }
   return (
     <p className="text-sm font-medium text-gray-900 truncate">
       {message?.content || "New Conversation"}

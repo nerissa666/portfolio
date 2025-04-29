@@ -1,5 +1,8 @@
 import Redis from "ioredis";
 import { v4 as uuid } from "uuid";
+import { CoreMessage } from "ai";
+
+type AiMessage = CoreMessage;
 
 const URL = process.env.AI_MESSAGES_REDIS_REDIS_URL;
 
@@ -17,11 +20,9 @@ export interface Conversation {
   updatedAt: number;
 }
 
-export interface Message {
+export interface Message extends Omit<AiMessage, "createdAt"> {
   id: string;
   conversationId: string;
-  content: string;
-  role: "user" | "assistant";
   createdAt: number;
 }
 
@@ -98,25 +99,22 @@ export async function deleteConversation(
   await deleteMessagesByConversation(conversationId);
 }
 
-// Message helpers
 export async function createMessage({
   conversationId,
-  content,
-  role,
+  aiMessage,
 }: {
   conversationId: string;
-  content: string;
-  role: "user" | "assistant";
+  aiMessage: Omit<AiMessage, "createdAt" | "id">;
 }): Promise<Message> {
   const messageId = uuid();
   const now = Date.now();
+
   const message: Message = {
+    ...aiMessage,
     id: messageId,
     conversationId,
-    content,
-    role,
     createdAt: now,
-  };
+  } as const;
 
   await redis.set(`message:${messageId}`, JSON.stringify(message));
   await redis.rpush(`conversation:${conversationId}:messages`, messageId);

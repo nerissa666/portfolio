@@ -14,6 +14,9 @@ export const specs = {
   parameters: paramsSchema,
 };
 
-export const execute = (args: ParamsType) => {
-  return <Calculator args={args} />;
+export const execute = (
+  args: ParamsType,
+  saveToolCallResult: <T>(result: T) => void
+) => {
+  return <Calculator args={args} saveToolCallResult={saveToolCallResult} />;
 };

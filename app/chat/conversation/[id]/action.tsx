@@ -5,17 +5,20 @@ import { Spinner } from "./spinner";
 import {
   AssistantMessageWrapper,
   ParseToMarkdown,
+  ToolCallWrapper,
   UserMessageWrapper,
 } from "./render-message";
 import { createMarkdownBlockGeneratorFromLlmReader } from "./parser";
 import { DeleteAllNodesWithMessageId } from "./delete-all-nodes-with-message-id";
-import { after } from "next/server";
-import { getLlmStream, processToolCall } from "./tools/llm";
+import { getLlmStream } from "./tools/llm";
 import {
   createMessage,
   getMessagesByConversation,
   Message,
 } from "@/app/db/redis";
+import { v4 as uuid } from "uuid";
+import { EXECUTE_TOOLS } from "./tools/tools";
+import React from "react";
 
 const getMessages = async (conversationId: string): Promise<Message[]> => {
   const messages = await getMessagesByConversation(conversationId);
@@ -33,15 +36,21 @@ const getMessages = async (conversationId: string): Promise<Message[]> => {
  */
 export const getMessageReactNode = async (
   conversationId: string,
-  messageContent: string // new message from user TODO: this should just be a string...
+  // If messageContent is null, it will generate a new message from the assistant
+  // based on the chat history. Otherwise, it will first save the messageContent
+  // as a user message to the DB, and then generate a new message from the assistant
+  // based on the chat history + the new user message.
+  messageContent: string | null
 ): Promise<ReactNode> => {
-  const newMessage = await createMessage({
-    conversationId,
-    content: messageContent,
-    role: "user",
-  });
-
-  const newMessageId = newMessage.id;
+  if (messageContent !== null) {
+    await createMessage({
+      conversationId,
+      aiMessage: {
+        role: "user",
+        content: messageContent,
+      },
+    });
+  }
 
   const llmStream = await getLlmStream(await getMessages(conversationId));
 
@@ -56,35 +65,44 @@ export const getMessageReactNode = async (
     // LLM stream into a stream of blocks
     const generateBlocks = createMarkdownBlockGeneratorFromLlmReader(llmReader);
 
+    const newMessageId = uuid();
+
+    let isFirstChunk = true;
+
     const StreamableParse = async ({
       accumulator = "",
     }: {
       accumulator?: string;
     }) => {
       const { done, value: block } = await generateBlocks.next();
+
+      // the stream is empty, weird, so we just stop!
+      if (isFirstChunk && done) {
+        return null;
+      }
+
       if (done) {
-        after(async () => {
-          await createMessage({
-            conversationId,
+        await createMessage({
+          conversationId,
+          aiMessage: {
             content: accumulator,
             role: "assistant",
-          });
+          },
         });
 
         return (
           <>
             <DeleteAllNodesWithMessageId messageId={newMessageId.toString()} />
             <ParseToMarkdown block={accumulator} />
-
-            <Suspense fallback={<Spinner />}>
-              <StreamToolCalls />
-            </Suspense>
           </>
         );
       }
 
+      const Wrapper = isFirstChunk ? AssistantMessageWrapper : React.Fragment;
+      isFirstChunk = false;
+
       return (
-        <>
+        <Wrapper>
           <ParseToMarkdown
             data-message-id={newMessageId.toString()}
             block={block}
@@ -99,26 +117,87 @@ export const getMessageReactNode = async (
           >
             <StreamableParse accumulator={accumulator + "\n" + block} />
           </Suspense>
-        </>
+        </Wrapper>
       );
     };
 
     return <StreamableParse />;
   };
 
+  const {
+    promise: allToolCallResultsSavedPromise,
+    resolve: allToolCallResultsSaved,
+  } = withResolvers<{
+    numberOfToolCalls: number;
+  }>();
+
   const StreamToolCalls = async () => {
-    const toolCallMessages = await llmStream.toolCalls;
+    const toolCalls = await llmStream.toolCalls;
 
-    // According to https://platform.openai.com/docs/guides/function-calling?api-mode=responses,
-    // we need to save the "function_call" and "function_call_output" into chat history
-    // HOWEVER, our DB schema does not support "function" or "function_output"
-    // TODO: Re-architect the DB to use NoSQL (like Redis) to store the call history
-    // Then, implement tool call properly.
+    if (toolCalls.length === 0) {
+      allToolCallResultsSaved({
+        numberOfToolCalls: 0,
+      });
+      return null;
+    }
 
-    return toolCallMessages.map((toolCall) => {
+    // save tool_calls (the instruction to call the tools) to DB first
+    await createMessage({
+      conversationId,
+      aiMessage: {
+        role: "assistant",
+        content: toolCalls,
+      },
+    });
+
+    const resultResolvers = toolCalls.map(() => withResolvers<unknown>());
+
+    // we only un-suspend MessageAfterToolCallResults component after all
+    // tool calls have received their results
+    Promise.all(resultResolvers.map((r) => r.promise)).then((results) => {
+      // save the output from all tool calls to DB in one go, this is the expected
+      // schema from the API.
+      createMessage({
+        conversationId,
+        aiMessage: {
+          role: "tool",
+          content: toolCalls.map((t, index) => ({
+            type: "tool-result",
+            toolCallId: t.toolCallId,
+            toolName: t.toolName,
+            args: t.args,
+            result: results[index],
+          })),
+        },
+      }).then(() => {
+        allToolCallResultsSaved({
+          numberOfToolCalls: toolCalls.length,
+        });
+      });
+    });
+
+    return toolCalls.map((toolCall, index) => {
       const RenderToolCall = async () => {
-        const result = await processToolCall(toolCall);
-        return <>{result}</>;
+        const toolCallResultSaved = <T,>(result: T) => {
+          resultResolvers[index].resolve(result);
+        };
+
+        const { toolName, args } = toolCall;
+
+        // TODO: Typically, MessageAfterToolCallResults is suspended until
+        // this callback resolves the promise. So, if this callback resolves
+        // the promise after the streaming times out, the chat will be
+        // in a broken state. Specifically, this would mean that this method
+        // CANNOT support client components resolving the promise because
+        // client components may be resolved at an arbitrary time in the future,
+        // like in a click handler, and the streaming may have already timed out.
+        const saveToolCallResult = async <RESULT,>(result: RESULT) => {
+          "use server";
+          toolCallResultSaved(result);
+        };
+
+        const result = await EXECUTE_TOOLS[toolName](args, saveToolCallResult);
+        return <ToolCallWrapper>{result}</ToolCallWrapper>;
       };
       return (
         <Suspense fallback={<Spinner />} key={toolCall.toolCallId}>
@@ -128,14 +207,36 @@ export const getMessageReactNode = async (
     });
   };
 
+  // If AI returns a function_call instruction, we need to first call the function
+  // with given parameters, and then append the instruction + the result to the chat history.
+  // And then, we recursively get the next message AGAIN from the LLM.
+  const MessageAfterToolCallResults = async () => {
+    const { numberOfToolCalls } = await allToolCallResultsSavedPromise;
+    // shouldRefresh is set to true only when the last response is a function_call
+    // and we need to append the result of the function_call to the chat history
+    // and then ask LLM to produce one more output from there.
+    // otherwise, we just do nothing (to avoid infinite loops)
+    if (numberOfToolCalls > 0) {
+      const node = await getMessageReactNode(conversationId, null);
+      return node;
+    }
+    return null;
+  };
+
   return (
     <>
-      <UserMessageWrapper>{messageContent}</UserMessageWrapper>
-      <AssistantMessageWrapper>
-        <Suspense fallback={<Spinner />}>
-          <StreamAssistantMessage />
-        </Suspense>
-      </AssistantMessageWrapper>
+      {messageContent !== null ? (
+        <UserMessageWrapper>{messageContent}</UserMessageWrapper>
+      ) : null}
+      <Suspense fallback={<Spinner />}>
+        <StreamAssistantMessage />
+      </Suspense>
+      <Suspense fallback={null}>
+        <StreamToolCalls />
+      </Suspense>
+      <Suspense fallback={null}>
+        <MessageAfterToolCallResults />
+      </Suspense>
     </>
   );
 };
@@ -146,20 +247,51 @@ export const getInitialMessagesReactNode = async (
   const messages = await getMessages(conversationId);
   return (
     <>
-      {messages.map(
-        (message, index) =>
-          message.role === "user" ? (
-            <UserMessageWrapper key={index}>
+      {messages.map((message, index) => {
+        if (
+          (message.role === "user" || message.role === "assistant") &&
+          typeof message.content === "string" &&
+          message.content.length > 0
+        ) {
+          const Wrapper =
+            message.role === "user"
+              ? UserMessageWrapper
+              : AssistantMessageWrapper;
+
+          return (
+            <Wrapper key={index}>
               <div>{message.content}</div>
-            </UserMessageWrapper>
-          ) : (
-            <AssistantMessageWrapper key={index}>
-              <ParseToMarkdown block={message.content} />
-            </AssistantMessageWrapper>
-          )
-        // TODO: Render function_output; otherwise, tool calls are not rendered
-        // after refreshing the page
-      )}
+            </Wrapper>
+          );
+        }
+
+        // after refreshing the tab, we will lose the UI for the tool calls,
+        // but the AI should have gotten the result of the tool calls, so we
+        // don't need to do anything here. however, it would be ideal to
+        // reproduce the UI for the tool calls after refreshing the tab.
+        return null;
+      })}
     </>
   );
 };
+
+/**
+ * Creates a promise with externally accessible resolve and reject functions.
+ * Useful for coordinating asynchronous operations that need to be resolved
+ * from outside the promise's executor function.
+ */
+function withResolvers<T>() {
+  let resolve: (value: T | PromiseLike<T>) => void;
+  let reject: (reason?: unknown) => void;
+
+  const promise = new Promise<T>((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+
+  return {
+    promise,
+    resolve: resolve!,
+    reject: reject!,
+  };
+}
