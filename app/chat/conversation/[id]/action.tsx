@@ -1,8 +1,6 @@
 "use server";
 
-import { Message } from "../../types";
 import { ReactNode, Suspense } from "react";
-import prisma from "@/app/db/prisma";
 import { Spinner } from "./spinner";
 import {
   AssistantMessageWrapper,
@@ -13,32 +11,15 @@ import { createMarkdownBlockGeneratorFromLlmReader } from "./parser";
 import { DeleteAllNodesWithMessageId } from "./delete-all-nodes-with-message-id";
 import { after } from "next/server";
 import { getLlmStream, processToolCall } from "./tools/llm";
+import {
+  createMessage,
+  getMessagesByConversation,
+  Message,
+} from "@/app/db/redis";
 
 const getMessages = async (conversationId: string): Promise<Message[]> => {
-  // TODO: add a Redis caching here to boost perf
-  const messages = await prisma.message.findMany({
-    where: { conversationId },
-    orderBy: { createdAt: "asc" },
-  });
-  return messages.map((msg) => {
-    if (msg.role !== "user" && msg.role !== "assistant") {
-      throw new Error(`Invalid role: ${msg.role}`);
-    }
-    return {
-      role: msg.role,
-      content: msg.content,
-    };
-  });
-};
-
-const addMessage = async (conversationId: string, message: Message) => {
-  await prisma.message.create({
-    data: {
-      role: message.role,
-      content: message.content,
-      conversationId,
-    },
-  });
+  const messages = await getMessagesByConversation(conversationId);
+  return messages;
 };
 
 //////////
@@ -52,15 +33,19 @@ const addMessage = async (conversationId: string, message: Message) => {
  */
 export const getMessageReactNode = async (
   conversationId: string,
-  message: Message // new message from user
+  messageContent: string // new message from user TODO: this should just be a string...
 ): Promise<ReactNode> => {
-  const llmStream = await getLlmStream(
-    (await getMessages(conversationId)).concat(message)
-  );
+  const newMessage = await createMessage({
+    conversationId,
+    content: messageContent,
+    role: "user",
+  });
+
+  const newMessageId = newMessage.id;
+
+  const llmStream = await getLlmStream(await getMessages(conversationId));
 
   const StreamAssistantMessage = async () => {
-    const newMessageId = crypto.randomUUID();
-
     // For a new message to LLM, you need to send all previous messages
     // Perf bottleneck: await getMessages(conversationId)
     const llmReader = llmStream.textStream.getReader();
@@ -79,14 +64,10 @@ export const getMessageReactNode = async (
       const { done, value: block } = await generateBlocks.next();
       if (done) {
         after(async () => {
-          await addMessage(conversationId, message);
-
-          await prisma.message.create({
-            data: {
-              role: "assistant",
-              content: accumulator,
-              conversationId,
-            },
+          await createMessage({
+            conversationId,
+            content: accumulator,
+            role: "assistant",
           });
         });
 
@@ -94,6 +75,10 @@ export const getMessageReactNode = async (
           <>
             <DeleteAllNodesWithMessageId messageId={newMessageId.toString()} />
             <ParseToMarkdown block={accumulator} />
+
+            <Suspense fallback={<Spinner />}>
+              <StreamToolCalls />
+            </Suspense>
           </>
         );
       }
@@ -145,13 +130,10 @@ export const getMessageReactNode = async (
 
   return (
     <>
-      <UserMessageWrapper>{message.content}</UserMessageWrapper>
+      <UserMessageWrapper>{messageContent}</UserMessageWrapper>
       <AssistantMessageWrapper>
         <Suspense fallback={<Spinner />}>
           <StreamAssistantMessage />
-        </Suspense>
-        <Suspense fallback={<Spinner />}>
-          <StreamToolCalls />
         </Suspense>
       </AssistantMessageWrapper>
     </>

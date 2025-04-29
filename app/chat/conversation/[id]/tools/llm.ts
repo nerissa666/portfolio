@@ -1,7 +1,7 @@
 import { openai } from "@ai-sdk/openai";
 import { streamText } from "ai";
-import { Message } from "@/app/chat/types";
 import { EXECUTE_TOOLS, TOOLS } from "./tools";
+import { Message } from "@/app/db/redis";
 
 export const getLlmStream = async (messages: Message[]) => {
   return await streamText({

@@ -1,11 +1,16 @@
 import { redirect } from "next/navigation";
-import prisma from "@/app/db/prisma";
 import { SpinnerInForm } from "./conversation/[id]/spinner";
 import Link from "next/link";
 import { Suspense } from "react";
 import { revalidatePath } from "next/cache";
 import { RenderFromPending } from "./conversation/[id]/render-from-pending";
 import { auth } from "@clerk/nextjs/server";
+import {
+  createConversation,
+  deleteConversation,
+  getConversationsByUser,
+  getFirstMessageOfConversation,
+} from "../db/redis";
 
 export default async function Page() {
   const { userId } = await auth();
@@ -31,9 +36,7 @@ const NewChat = ({ userId }: { userId: string }) => {
       <form
         action={async () => {
           "use server";
-          const conversation = await prisma.conversation.create({
-            data: { userId },
-          });
+          const conversation = await createConversation({ userId });
           redirect(`/chat/conversation/${conversation.id}`);
         }}
       >
@@ -64,22 +67,7 @@ const NewChat = ({ userId }: { userId: string }) => {
 };
 
 const ListConversations = async ({ userId }: { userId: string }) => {
-  const conversations = await prisma.conversation.findMany({
-    where: {
-      userId,
-    },
-    include: {
-      messages: {
-        take: 1,
-        orderBy: {
-          createdAt: "asc",
-        },
-      },
-    },
-    orderBy: {
-      updatedAt: "desc",
-    },
-  });
+  const conversations = await getConversationsByUser(userId);
 
   return (
     <>
@@ -110,9 +98,9 @@ const ListConversations = async ({ userId }: { userId: string }) => {
                   </div>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">
-                    {conversation.messages[0]?.content || "New Conversation"}
-                  </p>
+                  <Suspense fallback={null}>
+                    <ConversationPreview conversationId={conversation.id} />
+                  </Suspense>
                   <p className="text-sm text-gray-500 mt-1">
                     ID: {conversation.id.slice(0, 8)}...
                   </p>
@@ -122,14 +110,8 @@ const ListConversations = async ({ userId }: { userId: string }) => {
             <form
               action={async () => {
                 "use server";
-                console.log("Deleting conversation", conversation.id);
-                // Delete all messages first to avoid foreign key constraint violation
-                await prisma.message.deleteMany({
-                  where: { conversationId: conversation.id },
-                });
-                await prisma.conversation.delete({
-                  where: { id: conversation.id },
-                });
+                await deleteConversation(conversation.id, userId);
+
                 revalidatePath("/chat");
               }}
               className="absolute top-2 right-2"
@@ -195,5 +177,18 @@ const ConversationsLoadingSkeleton = () => {
         </div>
       ))}
     </div>
+  );
+};
+
+const ConversationPreview = async ({
+  conversationId,
+}: {
+  conversationId: string;
+}) => {
+  const message = await getFirstMessageOfConversation(conversationId);
+  return (
+    <p className="text-sm font-medium text-gray-900 truncate">
+      {message?.content || "New Conversation"}
+    </p>
   );
 };

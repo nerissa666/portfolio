@@ -23,6 +23,7 @@
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "highlight.js": "^11.11.1",
+    "ioredis": "^5.6.1",
     "katex": "^0.16.21",
     "lodash": "^4.17.21",
     "lucide-react": "^0.447.0",
@@ -40,6 +41,7 @@
     "remark-math": "^6.0.0",
     "tailwind-merge": "^2.5.3",
     "tailwindcss-animate": "^1.0.7",
+    "uuid": "^11.1.0",
     "zod": "^3.24.1"
   },
   "devDependencies": {

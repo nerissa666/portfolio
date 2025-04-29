@@ -1,8 +1,7 @@
 "use client";
 import { ReactNode, useState, useEffect, useRef } from "react";
-import { Message } from "../../types";
 import { RenderFromPending } from "./render-from-pending";
-
+import { type getMessageReactNode as getMessageReactNodeType } from "./action";
 const ScrollToBottomButton = ({ onClick }: { onClick: () => void }) => (
   <button
     onClick={onClick}
@@ -32,10 +31,7 @@ export default function ClientPage({
   initialMessagesReactNode,
 }: {
   conversationId: string;
-  getMessageReactNode: (
-    conversationId: string,
-    message: Message
-  ) => Promise<ReactNode>;
+  getMessageReactNode: typeof getMessageReactNodeType;
   initialMessagesReactNode: ReactNode;
 }) {
   const [inputValue, setInputValue] = useState("");
@@ -117,8 +113,7 @@ export default function ClientPage({
         ref={formRef}
         action={async () => {
           if (!inputValue.trim()) return;
-          const message = { role: "user", content: inputValue } as const;
-          const newNode = await getMessageReactNode(conversationId, message);
+          const newNode = await getMessageReactNode(conversationId, inputValue);
           setMessages((prev) => [...prev, newNode]);
           setInputValue("");
         }}

@@ -1,7 +1,7 @@
-import prisma from "@/app/db/prisma";
 import { getInitialMessagesReactNode, getMessageReactNode } from "./action";
 import ClientPage from "./client-page";
 import { connection } from "next/server";
+import { getConversationById } from "@/app/db/redis";
 
 export default async function Page({
   params,
@@ -12,9 +12,7 @@ export default async function Page({
 
   await connection();
 
-  const conversation = await prisma.conversation.findUnique({
-    where: { id },
-  });
+  const conversation = await getConversationById(id);
 
   if (!conversation) {
     throw new Error("Conversation not found");
