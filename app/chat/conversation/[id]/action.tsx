@@ -196,7 +196,10 @@ export const getMessageReactNode = async (
           toolCallResultSaved(result);
         };
 
-        const result = await EXECUTE_TOOLS[toolName](args, saveToolCallResult);
+        const result = await EXECUTE_TOOLS[
+          toolName as keyof typeof EXECUTE_TOOLS
+        ](args as any, saveToolCallResult);
+        // TODO: fix type safety
         return <ToolCallWrapper>{result}</ToolCallWrapper>;
       };
       return (
