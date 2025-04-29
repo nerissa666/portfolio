@@ -263,7 +263,7 @@ export const getInitialMessagesReactNode = async (
 
           return (
             <Wrapper key={index}>
-              <div>{message.content}</div>
+              <ParseToMarkdown block={message.content} />
             </Wrapper>
           );
         }
