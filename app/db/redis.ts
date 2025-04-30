@@ -1,6 +1,7 @@
 import Redis from "ioredis";
 import { v4 as uuid } from "uuid";
 import { CoreMessage } from "ai";
+import { auth } from "@clerk/nextjs/server";
 
 type AiMessage = CoreMessage;
 
@@ -189,4 +190,91 @@ export async function deleteMessagesByConversation(
     await redis.del(...keys);
   }
   await redis.del(`conversation:${conversationId}:messages`);
+}
+
+// REMINDERS
+// A user can have multiple reminders
+// Each reminder now has just a content field, but keep it flexible
+
+export interface Reminder {
+  id: string;
+  content: string;
+  createdAt: number;
+}
+
+const getUserId = async (): Promise<string> => {
+  const { userId } = await auth();
+  if (!userId) {
+    throw new Error("User not authenticated");
+  }
+  return userId;
+};
+
+/**
+ * Adds a reminder for a user
+ * @param content The content of the reminder
+ * @returns The created reminder object
+ */
+export async function addReminder(content: string): Promise<Reminder> {
+  const userId = await getUserId();
+  const id = uuid();
+  const reminder: Reminder = {
+    id,
+    content,
+    createdAt: Date.now(),
+  };
+
+  // Store the reminder
+  await redis.set(`reminder:${id}`, JSON.stringify(reminder));
+
+  // Add the reminder ID to the user's list of reminders
+  await redis.lpush(`user:${userId}:reminders`, id);
+
+  return reminder;
+}
+
+/**
+ * Lists all reminders for a user
+ * @returns Array of reminder objects
+ */
+export async function listAllReminders(): Promise<Reminder[]> {
+  const userId = await getUserId();
+
+  // Get all reminder IDs for the user
+  const reminderIds = await redis.lrange(`user:${userId}:reminders`, 0, -1);
+  if (!reminderIds.length) return [];
+
+  // Fetch all reminders
+  const reminders = await Promise.all(
+    reminderIds.map((id) => redis.get(`reminder:${id}`))
+  );
+
+  // Parse and return the reminders
+  return reminders
+    .filter(Boolean)
+    .map((str) => JSON.parse(str!))
+    .sort((a, b) => b.createdAt - a.createdAt); // Sort by newest first
+}
+
+/**
+ * Deletes a specific reminder
+ * @param userId The ID of the user
+ * @param reminderId The ID of the reminder to delete
+ * @returns Boolean indicating whether the deletion was successful
+ */
+export async function deleteReminder(reminderId: string): Promise<boolean> {
+  const userId = await getUserId();
+
+  // Remove the reminder from the user's list
+  const removed = await redis.lrem(`user:${userId}:reminders`, 1, reminderId);
+
+  // If the reminder wasn't in the user's list, return false
+  if (removed === 0) {
+    return false;
+  }
+
+  // Delete the reminder object
+  await redis.del(`reminder:${reminderId}`);
+
+  return true;
 }
