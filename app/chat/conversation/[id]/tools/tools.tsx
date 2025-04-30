@@ -3,6 +3,7 @@ import * as weather from "./weather";
 import * as addReminder from "./add-reminder";
 import * as showReminders from "./show-reminders";
 import * as editReminder from "./edit-reminder";
+import * as webSearch from "./web-search";
 
 // TODO: add more tools
 
@@ -12,6 +13,7 @@ export const TOOLS = {
   addReminder: addReminder.specs,
   showReminders: showReminders.specs,
   editReminder: editReminder.specs,
+  webSearch: webSearch.specs,
 } as const;
 
 // Execute function can return a React node, and it will be displayed
@@ -23,4 +25,5 @@ export const EXECUTE_TOOLS = {
   addReminder: addReminder.execute,
   showReminders: showReminders.execute,
   editReminder: editReminder.execute,
+  webSearch: webSearch.execute,
 } as const;
