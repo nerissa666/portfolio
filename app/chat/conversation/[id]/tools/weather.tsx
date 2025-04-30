@@ -1,7 +1,9 @@
 import { z } from "zod";
 
 const paramsSchema = z.object({
-  location: z.string().describe("The city or location to get weather for"),
+  location: z
+    .string()
+    .describe("The city or location to get weather for, in English only"),
   units: z
     .enum(["metric", "imperial"])
     .default("metric")
