@@ -19,6 +19,8 @@ import {
 import { v4 as uuid } from "uuid";
 import { EXECUTE_TOOLS } from "./tools/tools";
 import React from "react";
+import { GetNewResponse } from "./get-new-response-context";
+import { ToolCallProvider } from "./tools/tool-call-context";
 
 const getMessages = async (conversationId: string): Promise<Message[]> => {
   const messages = await getMessagesByConversation(conversationId);
@@ -200,7 +202,16 @@ export const getMessageReactNode = async (
           toolName as keyof typeof EXECUTE_TOOLS
         ](args as any, saveToolCallResult);
         // TODO: fix type safety
-        return <ToolCallWrapper>{result}</ToolCallWrapper>;
+        return (
+          <ToolCallWrapper>
+            <ToolCallProvider
+              conversationId={conversationId}
+              toolCall={toolCall}
+            >
+              {result}
+            </ToolCallProvider>
+          </ToolCallWrapper>
+        );
       };
       return (
         <Suspense fallback={<Spinner />} key={toolCall.toolCallId}>
@@ -220,8 +231,7 @@ export const getMessageReactNode = async (
     // and then ask LLM to produce one more output from there.
     // otherwise, we just do nothing (to avoid infinite loops)
     if (numberOfToolCalls > 0) {
-      const node = await getMessageReactNode(conversationId, null);
-      return node;
+      return <GetNewResponse />;
     }
     return null;
   };

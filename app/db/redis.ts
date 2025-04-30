@@ -278,3 +278,35 @@ export async function deleteReminder(reminderId: string): Promise<boolean> {
 
   return true;
 }
+
+/**
+ * Updates a specific reminder's content
+ * @param userId The ID of the user
+ * @param reminderId The ID of the reminder to update
+ * @param content The new content for the reminder
+ * @returns Boolean indicating whether the update was successful
+ */
+export async function updateReminder(
+  reminderId: string,
+  content: string
+): Promise<boolean> {
+  // TODO: add authentication check, you should not be able to edit other people's reminder content!
+
+  // Get the existing reminder
+  const reminderStr = await redis.get(`reminder:${reminderId}`);
+  if (!reminderStr) {
+    return false;
+  }
+
+  // Parse the reminder
+  const reminder = JSON.parse(reminderStr) as Reminder;
+
+  // Update the reminder
+  reminder.content = content;
+  reminder.createdAt = Date.now();
+
+  // Save the updated reminder
+  await redis.set(`reminder:${reminderId}`, JSON.stringify(reminder));
+
+  return true;
+}
