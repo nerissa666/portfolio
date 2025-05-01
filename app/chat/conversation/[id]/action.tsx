@@ -21,6 +21,8 @@ import { EXECUTE_TOOLS } from "./tools/tools";
 import React from "react";
 import { GetNewResponse } from "./get-new-response-context";
 import { ToolCallProvider } from "./tools/tool-call-context";
+import { extractUserInformation } from "./extract-user-information";
+import Collapsable from "./tools/collapsable.client";
 
 const getMessages = async (conversationId: string): Promise<Message[]> => {
   const messages = await getMessagesByConversation(conversationId);
@@ -45,6 +47,26 @@ export const getMessageReactNode = async (
   messageContent: string | null,
   onlineSearchEnabled: boolean
 ): Promise<ReactNode> => {
+  const extractUserInformationPromise = messageContent
+    ? extractUserInformation(messageContent)
+    : null;
+
+  const ExtractUserInformation = async () => {
+    if (extractUserInformationPromise === null) {
+      return null;
+    }
+    const extractedUserInformation = await extractUserInformationPromise;
+    if (extractedUserInformation.found) {
+      return (
+        <Collapsable title="Personal Information Learned">
+          Debug Info: We learned [{extractedUserInformation.information}]
+        </Collapsable>
+      );
+    } else {
+      return null;
+    }
+  };
+
   if (messageContent !== null) {
     await createMessage({
       conversationId,
@@ -54,15 +76,16 @@ export const getMessageReactNode = async (
       },
     });
 
-    await createMessage({
-      conversationId,
-      aiMessage: {
-        role: "system",
-        content: `${
-          onlineSearchEnabled ? "MUST" : "DO NOT"
-        } answer [${messageContent}] with web-search.`,
-      },
-    });
+    // TODO: this implementation is ugly, we should not have to create a new message
+    if (onlineSearchEnabled) {
+      await createMessage({
+        conversationId,
+        aiMessage: {
+          role: "system",
+          content: `MUST answer with web-search.`,
+        },
+      });
+    }
   }
 
   const llmStream = await getLlmStream(await getMessages(conversationId));
@@ -211,6 +234,7 @@ export const getMessageReactNode = async (
 
         const result = await EXECUTE_TOOLS[
           toolName as keyof typeof EXECUTE_TOOLS
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ](args as any, saveToolCallResult);
         // TODO: fix type safety
         return (
@@ -250,7 +274,12 @@ export const getMessageReactNode = async (
   return (
     <>
       {messageContent !== null ? (
-        <UserMessageWrapper>{messageContent}</UserMessageWrapper>
+        <UserMessageWrapper>
+          {messageContent}
+          <Suspense fallback={null}>
+            <ExtractUserInformation />
+          </Suspense>
+        </UserMessageWrapper>
       ) : null}
       <Suspense fallback={<Spinner />}>
         <StreamAssistantMessage />

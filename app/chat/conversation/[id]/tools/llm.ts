@@ -1,18 +1,30 @@
 import { openai } from "@ai-sdk/openai";
-import { CoreMessage, LanguageModelV1, streamText } from "ai";
+import { CoreMessage, streamText } from "ai";
 import { TOOLS } from "./tools";
-import { Message } from "@/app/db/redis";
+import { getUserInformation, Message } from "@/app/db/redis";
 
 export const getLlmStream = async (messages: Message[]) => {
-  console.log(JSON.stringify(messages, null, 2));
+  const userInformation = await getUserInformation();
+
+  console.log("userInformation", userInformation);
+
   return await streamText({
     model: openai("gpt-4o"),
-    messages: [SYSTEM_PROMPT, ...messages] as CoreMessage[],
+    messages: [
+      {
+        role: "system",
+        content: `Prefer calling tools over guessing. For example, do not guess today's date, use [webSearch] to find it.`,
+      },
+      {
+        role: "system",
+        content: `Here is some information we learned about the user: ${userInformation}`,
+      },
+      {
+        role: "system",
+        content: `Today's date is ${new Date().toLocaleDateString()}`,
+      },
+      ...messages,
+    ] as CoreMessage[],
     tools: TOOLS,
   });
-};
-
-const SYSTEM_PROMPT: CoreMessage = {
-  role: "system",
-  content: `Prefer calling tools over guessing. For example, do not guess today's date, use [webSearch] to find it.`,
 };
