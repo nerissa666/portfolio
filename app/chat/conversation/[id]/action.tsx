@@ -211,6 +211,7 @@ export const getMessageReactNode = async (
 
         const result = await EXECUTE_TOOLS[
           toolName as keyof typeof EXECUTE_TOOLS
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ](args as any, saveToolCallResult);
         // TODO: fix type safety
         return (
