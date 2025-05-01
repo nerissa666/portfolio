@@ -42,7 +42,8 @@ export const getMessageReactNode = async (
   // based on the chat history. Otherwise, it will first save the messageContent
   // as a user message to the DB, and then generate a new message from the assistant
   // based on the chat history + the new user message.
-  messageContent: string | null
+  messageContent: string | null,
+  onlineSearchEnabled: boolean
 ): Promise<ReactNode> => {
   if (messageContent !== null) {
     await createMessage({
@@ -50,6 +51,16 @@ export const getMessageReactNode = async (
       aiMessage: {
         role: "user",
         content: messageContent,
+      },
+    });
+
+    await createMessage({
+      conversationId,
+      aiMessage: {
+        role: "system",
+        content: `${
+          onlineSearchEnabled ? "MUST" : "DO NOT"
+        } answer [${messageContent}] with web-search.`,
       },
     });
   }

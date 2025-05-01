@@ -37,6 +37,7 @@ export default function ClientPage({
 }) {
   const [inputValue, setInputValue] = useState("");
   const [showScrollButton, setShowScrollButton] = useState(false);
+  const [onlineSearchEnabled, setOnlineSearchEnabled] = useState(false);
   const inputRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -83,7 +84,11 @@ export default function ClientPage({
   return (
     <NewResponseProvider
       triggerNewResponse={async () => {
-        const newNode = await getMessageReactNode(conversationId, null);
+        const newNode = await getMessageReactNode(
+          conversationId,
+          null,
+          onlineSearchEnabled
+        );
         setMessages((prev) => [...prev, newNode]);
       }}
     >
@@ -122,13 +127,41 @@ export default function ClientPage({
             if (!inputValue.trim()) return;
             const newNode = await getMessageReactNode(
               conversationId,
-              inputValue
+              inputValue,
+              onlineSearchEnabled
             );
             setMessages((prev) => [...prev, newNode]);
             setInputValue("");
           }}
         >
           <div ref={inputRef} className="my-4 bg-white">
+            <div className="flex items-center justify-end mb-2">
+              <label className="flex items-center cursor-pointer">
+                <span className="mr-2 text-sm text-gray-600">
+                  Online search
+                </span>
+                <div className="relative">
+                  <input
+                    type="checkbox"
+                    className="sr-only"
+                    checked={onlineSearchEnabled}
+                    onChange={() =>
+                      setOnlineSearchEnabled(!onlineSearchEnabled)
+                    }
+                  />
+                  <div
+                    className={`block w-10 h-6 rounded-full transition-colors ${
+                      onlineSearchEnabled ? "bg-blue-500" : "bg-gray-300"
+                    }`}
+                  ></div>
+                  <div
+                    className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${
+                      onlineSearchEnabled ? "transform translate-x-4" : ""
+                    }`}
+                  ></div>
+                </div>
+              </label>
+            </div>
             <div className="relative">
               <textarea
                 ref={textareaRef}

@@ -4,6 +4,7 @@ import { TOOLS } from "./tools";
 import { Message } from "@/app/db/redis";
 
 export const getLlmStream = async (messages: Message[]) => {
+  console.log(JSON.stringify(messages, null, 2));
   return await streamText({
     model: openai("gpt-4o"),
     messages: [SYSTEM_PROMPT, ...messages] as CoreMessage[],
