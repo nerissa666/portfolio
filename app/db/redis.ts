@@ -325,7 +325,7 @@ export async function addUserInformation(
   information: string
 ): Promise<boolean> {
   try {
-    const userId = getUserId();
+    const userId = await getUserId();
     await redis.rpush(`user:${userId}:information`, information);
     return true;
   } catch (error) {
@@ -336,19 +336,37 @@ export async function addUserInformation(
 
 /**
  * Retrieves all information stored about a user
- * @returns Concatenated string of all user information or empty string if none found
+ * @returns Array of user information strings
  */
-export async function getUserInformation(): Promise<string> {
+export async function getUserInformation(): Promise<string[]> {
   try {
-    const userId = getUserId();
+    const userId = await getUserId();
     const informationArray = await redis.lrange(
       `user:${userId}:information`,
       0,
       -1
     );
-    return informationArray.join(" ");
+    return informationArray;
   } catch (error) {
     console.error("Error retrieving user information:", error);
-    return "";
+    return [];
+  }
+}
+
+/**
+ * Deletes a specific piece of user information
+ * @param information The information to delete
+ * @returns Boolean indicating whether the operation was successful
+ */
+export async function deleteUserInformation(
+  information: string
+): Promise<boolean> {
+  try {
+    const userId = await getUserId();
+    await redis.lrem(`user:${userId}:information`, 0, information);
+    return true;
+  } catch (error) {
+    console.error("Error deleting user information:", error);
+    return false;
   }
 }

@@ -4,7 +4,7 @@ import { TOOLS } from "./tools";
 import { getUserInformation, Message } from "@/app/db/redis";
 
 export const getLlmStream = async (messages: Message[]) => {
-  const userInformation = await getUserInformation();
+  const userInformation = (await getUserInformation()).join(" ");
 
   return await streamText({
     model: openai("gpt-4o"),
