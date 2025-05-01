@@ -47,14 +47,27 @@ export const getMessageReactNode = async (
   messageContent: string | null,
   onlineSearchEnabled: boolean
 ): Promise<ReactNode> => {
+  if (messageContent !== null) {
+    await createMessage({
+      conversationId,
+      aiMessage: {
+        role: "user",
+        content: messageContent,
+      },
+    });
+  }
+
   const messages = await getMessages(conversationId);
   const llmStream = await getLlmStream(messages);
 
   const extractUserInformationPromise = messageContent
     ? extractUserInformation(
         "<Ctx>" +
-          messages.at(-1)?.content +
+          (messages.length >= 2 ? messages.at(-2)?.content : "") +
           "</Ctx>" +
+          "<PrevMsg>" +
+          (messages.length >= 1 ? messages.at(-1)?.content : "") +
+          "</PrevMsg>" +
           "<Ans>" +
           messageContent +
           "</Ans>"
@@ -78,14 +91,6 @@ export const getMessageReactNode = async (
   };
 
   if (messageContent !== null) {
-    await createMessage({
-      conversationId,
-      aiMessage: {
-        role: "user",
-        content: messageContent,
-      },
-    });
-
     // TODO: this implementation is ugly, we should not have to create a new message
     if (onlineSearchEnabled) {
       await createMessage({
