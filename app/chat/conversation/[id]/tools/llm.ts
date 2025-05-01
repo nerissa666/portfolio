@@ -6,8 +6,6 @@ import { getUserInformation, Message } from "@/app/db/redis";
 export const getLlmStream = async (messages: Message[]) => {
   const userInformation = await getUserInformation();
 
-  console.log("userInformation", userInformation);
-
   return await streamText({
     model: openai("gpt-4o"),
     messages: [
