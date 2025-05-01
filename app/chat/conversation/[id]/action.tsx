@@ -65,11 +65,8 @@ export const getMessageReactNode = async (
         "<Ctx>" +
           (messages.length >= 2 ? messages.at(-2)?.content : "") +
           "</Ctx>" +
-          "<PrevMsg>" +
-          (messages.length >= 1 ? messages.at(-1)?.content : "") +
-          "</PrevMsg>" +
           "<Ans>" +
-          messageContent +
+          (messages.length >= 1 ? messages.at(-1)?.content : "") +
           "</Ans>"
       )
     : null;
