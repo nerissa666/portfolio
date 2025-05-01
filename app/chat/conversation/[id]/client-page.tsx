@@ -138,7 +138,7 @@ export default function ClientPage({
             <div className="flex items-center justify-end mb-2">
               <label className="flex items-center cursor-pointer">
                 <span className="mr-2 text-sm text-gray-600">
-                  Online search
+                  Force Online Search
                 </span>
                 <div className="relative">
                   <input
