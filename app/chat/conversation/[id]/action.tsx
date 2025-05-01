@@ -47,8 +47,18 @@ export const getMessageReactNode = async (
   messageContent: string | null,
   onlineSearchEnabled: boolean
 ): Promise<ReactNode> => {
+  const messages = await getMessages(conversationId);
+  const llmStream = await getLlmStream(messages);
+
   const extractUserInformationPromise = messageContent
-    ? extractUserInformation(messageContent)
+    ? extractUserInformation(
+        "<Ctx>" +
+          messages.at(-1)?.content +
+          "</Ctx>" +
+          "<Ans>" +
+          messageContent +
+          "</Ans>"
+      )
     : null;
 
   const ExtractUserInformation = async () => {
@@ -87,8 +97,6 @@ export const getMessageReactNode = async (
       });
     }
   }
-
-  const llmStream = await getLlmStream(await getMessages(conversationId));
 
   const StreamAssistantMessage = async () => {
     // For a new message to LLM, you need to send all previous messages
