@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@ai-sdk/deepseek": "^0.2.6",
+    "@ai-sdk/google": "^1.2.14",
     "@ai-sdk/openai": "^1.1.2",
     "@clerk/nextjs": "^6.15.0",
     "@prisma/client": "6.6.0",
@@ -22,7 +23,9 @@
     "babel-plugin-react-compiler": "19.0.0-beta-714736e-20250131",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
+    "exa-js": "^1.6.13",
     "highlight.js": "^11.11.1",
+    "ioredis": "^5.6.1",
     "katex": "^0.16.21",
     "lodash": "^4.17.21",
     "lucide-react": "^0.447.0",
@@ -40,6 +43,7 @@
     "remark-math": "^6.0.0",
     "tailwind-merge": "^2.5.3",
     "tailwindcss-animate": "^1.0.7",
+    "uuid": "^11.1.0",
     "zod": "^3.24.1"
   },
   "devDependencies": {

@@ -1,11 +1,18 @@
 import { redirect } from "next/navigation";
-import prisma from "@/app/db/prisma";
 import { SpinnerInForm } from "./conversation/[id]/spinner";
 import Link from "next/link";
 import { Suspense } from "react";
 import { revalidatePath } from "next/cache";
 import { RenderFromPending } from "./conversation/[id]/render-from-pending";
 import { auth } from "@clerk/nextjs/server";
+import {
+  createConversation,
+  deleteConversation,
+  getConversationsByUser,
+  getFirstMessageOfConversation,
+  getUserInformation,
+  deleteUserInformation,
+} from "../db/redis";
 
 export default async function Page() {
   const { userId } = await auth();
@@ -17,8 +24,13 @@ export default async function Page() {
   return (
     <>
       <NewChat userId={userId} />
+
       <Suspense fallback={<ConversationsLoadingSkeleton />}>
         <ListConversations userId={userId} />
+      </Suspense>
+
+      <Suspense fallback={<PersonalContextLoadingSkeleton />}>
+        <PersonalContext />
       </Suspense>
     </>
   );
@@ -31,9 +43,7 @@ const NewChat = ({ userId }: { userId: string }) => {
       <form
         action={async () => {
           "use server";
-          const conversation = await prisma.conversation.create({
-            data: { userId },
-          });
+          const conversation = await createConversation({ userId });
           redirect(`/chat/conversation/${conversation.id}`);
         }}
       >
@@ -63,23 +73,68 @@ const NewChat = ({ userId }: { userId: string }) => {
   );
 };
 
+const PersonalContext = async () => {
+  const userInfo = await getUserInformation();
+
+  return (
+    <div className="mb-8">
+      <h2 className="text-xl font-semibold text-gray-900 mb-4">
+        Personal Context
+      </h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {userInfo.map((info, index) => (
+          <div key={index} className="relative">
+            <div className="p-4 bg-white rounded-xl border border-gray-200">
+              <p className="text-sm text-gray-900">{info}</p>
+              <form
+                action={async () => {
+                  "use server";
+                  await deleteUserInformation(info);
+                  revalidatePath("/chat");
+                }}
+                className="absolute top-2 right-2"
+              >
+                <button
+                  type="submit"
+                  className="p-1.5 rounded-full text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                  title="Delete information"
+                >
+                  <RenderFromPending
+                    pendingNode={
+                      <div className="h-4 w-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+                    }
+                    notPendingNode={
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-4 w-4"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    }
+                  />
+                </button>
+              </form>
+            </div>
+          </div>
+        ))}
+        {userInfo.length === 0 && (
+          <div className="text-center py-4 col-span-full">
+            <p className="text-gray-500">No personal information stored yet.</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 const ListConversations = async ({ userId }: { userId: string }) => {
-  const conversations = await prisma.conversation.findMany({
-    where: {
-      userId,
-    },
-    include: {
-      messages: {
-        take: 1,
-        orderBy: {
-          createdAt: "asc",
-        },
-      },
-    },
-    orderBy: {
-      updatedAt: "desc",
-    },
-  });
+  const conversations = await getConversationsByUser(userId);
 
   return (
     <>
@@ -110,9 +165,9 @@ const ListConversations = async ({ userId }: { userId: string }) => {
                   </div>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">
-                    {conversation.messages[0]?.content || "New Conversation"}
-                  </p>
+                  <Suspense fallback={null}>
+                    <ConversationPreview conversationId={conversation.id} />
+                  </Suspense>
                   <p className="text-sm text-gray-500 mt-1">
                     ID: {conversation.id.slice(0, 8)}...
                   </p>
@@ -122,14 +177,8 @@ const ListConversations = async ({ userId }: { userId: string }) => {
             <form
               action={async () => {
                 "use server";
-                console.log("Deleting conversation", conversation.id);
-                // Delete all messages first to avoid foreign key constraint violation
-                await prisma.message.deleteMany({
-                  where: { conversationId: conversation.id },
-                });
-                await prisma.conversation.delete({
-                  where: { id: conversation.id },
-                });
+                await deleteConversation(conversation.id, userId);
+
                 revalidatePath("/chat");
               }}
               className="absolute top-2 right-2"
@@ -196,4 +245,24 @@ const ConversationsLoadingSkeleton = () => {
       ))}
     </div>
   );
+};
+
+const ConversationPreview = async ({
+  conversationId,
+}: {
+  conversationId: string;
+}) => {
+  const message = await getFirstMessageOfConversation(conversationId);
+  if (message?.role !== "user" || typeof message?.content !== "string") {
+    return null;
+  }
+  return (
+    <p className="text-sm font-medium text-gray-900 truncate">
+      {message?.content || "New Conversation"}
+    </p>
+  );
+};
+
+const PersonalContextLoadingSkeleton = () => {
+  return <div className="h-4 bg-gray-200 rounded w-3/4"></div>;
 };
