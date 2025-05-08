@@ -14,6 +14,7 @@ export const Spinner = () => {
           `}
       </style>
       <div
+        id="spinner"
         style={{
           animation: "spin 0.5s linear infinite",
           borderRadius: "50%",

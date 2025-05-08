@@ -23,6 +23,7 @@ import { GetNewResponse } from "./get-new-response-context";
 import { ToolCallProvider } from "./tools/tool-call-context";
 import { extractUserInformation } from "./extract-user-information";
 import Collapsable from "./tools/collapsable.client";
+import { AssistantMessageWrapperV2 } from "./assistant-message-wrapper-v2";
 
 const getMessages = async (conversationId: string): Promise<Message[]> => {
   const messages = await getMessagesByConversation(conversationId);
@@ -130,7 +131,7 @@ export const getMessageReactNode = async (
         );
       }
 
-      const Wrapper = isFirstChunk ? AssistantMessageWrapper : React.Fragment;
+      const Wrapper = isFirstChunk ? AssistantMessageWrapperV2 : React.Fragment;
       isFirstChunk = false;
 
       return (
