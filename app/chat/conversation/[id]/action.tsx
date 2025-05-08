@@ -78,7 +78,7 @@ export const getMessageReactNode = async (
     const extractedUserInformation = await extractUserInformationPromise;
     if (extractedUserInformation.found) {
       return (
-        <Collapsable title="Personal Information Learned">
+        <Collapsable title="Recorded personal info">
           Debug Info: We learned [{extractedUserInformation.information}]
         </Collapsable>
       );

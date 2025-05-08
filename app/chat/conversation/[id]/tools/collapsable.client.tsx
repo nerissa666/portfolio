@@ -21,19 +21,27 @@ export default function Collapsable({
   };
 
   return (
-    <div className="border rounded-md overflow-hidden">
+    <div className="mb-2">
       <button
         onClick={toggleCollapse}
-        className="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
+        className="w-full flex items-center gap-2 p-2 text-left text-gray-500 hover:text-gray-700 transition-colors focus:outline-none"
       >
-        <span className="font-medium">{title}</span>
         {isCollapsed ? (
-          <ChevronRight className="h-4 w-4" />
+          <ChevronRight className="h-3 w-3 text-gray-400 flex-shrink-0" />
         ) : (
-          <ChevronDown className="h-4 w-4" />
+          <ChevronDown className="h-3 w-3 text-gray-400 flex-shrink-0" />
         )}
+        <span
+          className={`text-sm font-medium border-b border-dotted border-gray-300 ${
+            isCollapsed ? "italic" : ""
+          }`}
+        >
+          {title}
+        </span>
       </button>
-      {!isCollapsed && <div className="p-3 border-t">{children}</div>}
+      {!isCollapsed && (
+        <div className="pl-5 py-2 text-sm text-gray-600">{children}</div>
+      )}
     </div>
   );
 }
