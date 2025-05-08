@@ -62,7 +62,7 @@ export default function ClientPage({
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Enter" && e.shiftKey) {
+      if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
         formRef.current?.requestSubmit();
       }
@@ -101,7 +101,6 @@ export default function ClientPage({
                 </h1>
                 <div className="text-gray-600 max-w-md mb-8">
                   <p>Start a conversation by typing a message below.</p>
-                  <p>Use Shift + Enter to quickly send messages.</p>
                 </div>
               </div>
             ) : (
@@ -138,7 +137,6 @@ export default function ClientPage({
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   className="w-full px-3 py-2 pr-12 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                  placeholder="Type a message... (Shift + Enter to send)"
                   rows={3}
                 />
                 <button
