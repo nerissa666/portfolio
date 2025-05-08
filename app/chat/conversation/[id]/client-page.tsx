@@ -17,6 +17,27 @@ export default function ClientPage({
   const inputRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    // Function to update the height
+    const updateHeight = () => {
+      const vh = window.innerHeight * 0.01;
+      document.documentElement.style.setProperty("--vh", `${vh}px`);
+    };
+
+    // Initial update
+    updateHeight();
+
+    // Update on resize and orientation change
+    window.addEventListener("resize", updateHeight);
+    window.addEventListener("orientationchange", updateHeight);
+
+    return () => {
+      window.removeEventListener("resize", updateHeight);
+      window.removeEventListener("orientationchange", updateHeight);
+    };
+  }, []);
+
   const [messages, setMessages] = useState<ReactNode[]>([
     initialMessagesReactNode,
   ]);
@@ -49,8 +70,10 @@ export default function ClientPage({
         setMessages((prev) => [...prev, newNode]);
       }}
     >
-      {/* Assume TopNav height is 32px */}
-      <div className="flex flex-col h-[calc(100vh-33px)]">
+      <div
+        className="flex flex-col"
+        style={{ height: "calc(var(--vh, 1vh) * 100 - 33px)" }}
+      >
         <div className="flex-1 overflow-y-auto">
           <div className="flex flex-col gap-4 p-4">
             {messages.length === 0 ||
@@ -75,7 +98,7 @@ export default function ClientPage({
           </div>
         </div>
 
-        <div className="w-full border-t border-gray-200 bg-white sticky bottom-0">
+        <div className="w-full border-t border-gray-200 bg-white">
           <form
             ref={formRef}
             action={async () => {
@@ -96,6 +119,7 @@ export default function ClientPage({
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   className="w-full px-3 py-2 pr-12 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                  placeholder="Type a message... (Enter to send, Shift + Enter for new line)"
                   rows={3}
                 />
                 <button
