@@ -3,28 +3,6 @@ import { ReactNode, useState, useEffect, useRef } from "react";
 import { RenderFromPending } from "./render-from-pending";
 import { type getMessageReactNode as getMessageReactNodeType } from "./action";
 import { NewResponseProvider } from "./get-new-response-context";
-const ScrollToBottomButton = ({ onClick }: { onClick: () => void }) => (
-  <button
-    onClick={onClick}
-    className="fixed bottom-8 left-1/2 -translate-x-1/2 p-3 bg-gray-800 rounded-full shadow-lg hover:bg-gray-700 transition-colors border border-gray-700"
-    aria-label="Scroll to bottom"
-  >
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="white"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="m6 9 6 6 6-6" />
-      <path d="m6 14 6 6 6-6" />
-    </svg>
-  </button>
-);
 
 export default function ClientPage({
   conversationId,
@@ -36,29 +14,13 @@ export default function ClientPage({
   initialMessagesReactNode: ReactNode;
 }) {
   const [inputValue, setInputValue] = useState("");
-  const [showScrollButton, setShowScrollButton] = useState(false);
   const inputRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-
   const [messages, setMessages] = useState<ReactNode[]>([
     initialMessagesReactNode,
   ]);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        setShowScrollButton(!entry.isIntersecting);
-      },
-      { threshold: 0 }
-    );
-
-    if (inputRef.current) {
-      observer.observe(inputRef.current);
-    }
-
-    return () => observer.disconnect();
-  }, []);
+  const bottomOfPageRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -104,18 +66,14 @@ export default function ClientPage({
                 </div>
               </div>
             ) : (
-              messages
+              <>
+                {messages}
+                <div className="h-[50vh]" />
+                <div ref={bottomOfPageRef} />
+              </>
             )}
           </div>
         </div>
-
-        {showScrollButton && (
-          <ScrollToBottomButton
-            onClick={() => {
-              inputRef.current?.scrollIntoView({ behavior: "smooth" });
-            }}
-          />
-        )}
 
         <div className="w-full border-t border-gray-200 bg-white">
           <form
@@ -128,6 +86,7 @@ export default function ClientPage({
               );
               setMessages((prev) => [...prev, newNode]);
               setInputValue("");
+              bottomOfPageRef.current?.scrollIntoView({ behavior: "smooth" });
             }}
           >
             <div ref={inputRef} className="p-4">
