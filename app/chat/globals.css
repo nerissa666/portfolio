@@ -1,6 +1,8 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+
 .markdown-content {
   /* Reset margins and padding */
   margin: 0;

@@ -75,7 +75,7 @@ export default function ClientPage({
           </div>
         </div>
 
-        <div className="w-full border-t border-gray-200 bg-white">
+        <div className="w-full border-t border-gray-200 bg-white sticky bottom-0">
           <form
             ref={formRef}
             action={async () => {
