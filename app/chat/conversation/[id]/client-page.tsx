@@ -72,7 +72,7 @@ export default function ClientPage({
     >
       <div
         className="flex flex-col"
-        style={{ height: "calc(var(--vh, 1vh) * 100 - 33px)" }}
+        style={{ height: "calc(var(--vh, 1vh) * 100 - 60px)" }}
       >
         <div className="flex-1 overflow-y-auto">
           <div className="flex flex-col gap-4 p-4">

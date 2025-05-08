@@ -50,8 +50,8 @@ export default function RootLayout({
 
 const TopNav = () => {
   return (
-    <nav className="sticky top-0 border-b bg-gray-900 z-10">
-      <div className="h-[24px] max-w-5xl mx-auto px-4 py-4 flex justify-between items-center">
+    <nav className="sticky top-0 border-b bg-gray-900 z-10 h-[60px]">
+      <div className="max-w-5xl mx-auto px-4 py-4 flex justify-between items-center">
         <Link
           href="/chat"
           className="flex items-center gap-2 text-white hover:text-gray-300"
@@ -72,7 +72,7 @@ const TopNav = () => {
           </svg>
           <span className="font-medium">Home</span>
         </Link>
-        <div className="flex items-center gap-4 text-white">
+        <div className="flex items-center gap-4 text-white w-[28px] h-[28px]">
           <SignedIn>
             <UserButton />
           </SignedIn>
