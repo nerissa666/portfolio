@@ -53,7 +53,7 @@ export async function execute(
 
     // Save the current state
     saveToolCallResult(
-      "NOT DONE. WAITING FOR USER TO OPERATE. DO NOT SAY IT'S DONE!"
+      "Tool call is NOT executed yet. Waiting for user to confirm on the dialog (do not ask if you want to proceed because User must perform on UI). You can just reply with 'waiting for user confirmation' if you don't need to say anything else. Do not reply with another tool_call."
     );
 
     // Return the confirmation dialog

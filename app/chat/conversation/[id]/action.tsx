@@ -27,6 +27,7 @@ import { AssistantMessageWrapperV2 } from "./assistant-message-wrapper-v2";
 
 const getMessages = async (conversationId: string): Promise<Message[]> => {
   const messages = await getMessagesByConversation(conversationId);
+  console.log(JSON.stringify(messages, null, 2));
   return messages;
 };
 
