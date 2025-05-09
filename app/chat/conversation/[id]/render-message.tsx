@@ -11,7 +11,7 @@ export const UserMessageWrapper = ({
         U
       </div>
       <div className="max-w-[85%] bg-white p-3 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200">
-        <div className="markdown-content prose prose-gray prose-sm max-w-none">
+        <div className="markdown-content prose prose-gray prose-sm max-w-none whitespace-pre-line">
           {children}
         </div>
       </div>
