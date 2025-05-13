@@ -14,7 +14,7 @@ async function Conversations() {
 
 export default function Page() {
   return (
-    <div className="w-64 border-r border-gray-200 bg-white h-[calc(100vh-60px)] overflow-y-auto">
+    <div className="w-64 border-r border-gray-200 bg-white h-[calc(100vh-60px)] overflow-y-auto hidden md:block">
       <div className="p-4">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-lg font-semibold text-gray-900">Conversations</h2>

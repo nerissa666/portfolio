@@ -41,9 +41,9 @@ export default async function Page() {
 
 const NewChat = ({ userId }: { userId: string }) => {
   return (
-    <div className="flex justify-between items-center mb-6 border-b border-gray-200 pb-4">
+    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6 border-b border-gray-200 pb-4">
       <h1 className="text-2xl font-bold text-gray-900">My Conversations</h1>
-      <div className="flex gap-4">
+      <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
         <Suspense fallback={null}>
           <ClearAllButton userId={userId} />
         </Suspense>
@@ -56,7 +56,7 @@ const NewChat = ({ userId }: { userId: string }) => {
         >
           <button
             type="submit"
-            className="flex items-center justify-center py-2 px-6 rounded-md text-sm font-medium text-white bg-[#4A154B] hover:bg-[#611f69] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#4A154B] transition-colors"
+            className="w-full sm:w-auto flex items-center justify-center py-2 px-6 rounded-md text-sm font-medium text-white bg-[#4A154B] hover:bg-[#611f69] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#4A154B] transition-colors"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -98,7 +98,7 @@ const ClearAllButton = async ({ userId }: { userId: string }) => {
     >
       <button
         type="submit"
-        className="flex items-center justify-center py-2 px-6 rounded-md text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
+        className="w-full sm:w-auto flex items-center justify-center py-2 px-6 rounded-md text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"

@@ -40,9 +40,7 @@ export default function RootLayout({
             className={`${geistSans.variable} ${geistMono.variable} antialiased bg-grey-50`}
           >
             <TopNav />
-            <FullHeightContainer offset={60} className="overflow-y-hidden">
-              <div className="max-w-5xl mx-auto">{children}</div>
-            </FullHeightContainer>
+            <div className="max-w-5xl mx-auto">{children}</div>
           </body>
         </html>
       </ClerkProvider>

@@ -1,3 +1,5 @@
+import FullHeightContainer from "@/app/components/full-height-container";
+
 export default function ChatLayout({
   children,
   sidebar,
@@ -6,9 +8,9 @@ export default function ChatLayout({
   sidebar: React.ReactNode;
 }) {
   return (
-    <div className="flex h-screen">
+    <FullHeightContainer offset={60} className="overflow-y-hidden flex">
       {sidebar}
       <div className="flex-1">{children}</div>
-    </div>
+    </FullHeightContainer>
   );
 }
