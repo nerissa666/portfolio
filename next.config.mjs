@@ -2,11 +2,11 @@
 const nextConfig = {
   experimental: {
     dynamicIO: true,
-    // ppr: true,
+    ppr: true,
     inlineCss: true,
     reactCompiler: true,
     viewTransition: true,
-    // clientSegmentCache: true
+    clientSegmentCache: true
   },
   eslint: {
     ignoreDuringBuilds: true,

@@ -1,8 +1,6 @@
-import { Suspense } from "react";
 import { auth } from "@clerk/nextjs/server";
 import { getConversationsByUser } from "@/app/db/redis";
 import ConversationList from "./conversations-list";
-import ConversationsLoadingSkeleton from "./conversations-loading-skeleton";
 
 async function Conversations() {
   const { userId } = await auth();
@@ -12,17 +10,14 @@ async function Conversations() {
   return <ConversationList conversations={conversations} />;
 }
 
-export default function Sidebar() {
-  console.log("sidebar remounts");
+export default function Page() {
   return (
     <div className="w-64 border-r border-gray-200 bg-white h-[calc(100vh-60px)] overflow-y-auto">
       <div className="p-4">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">
           Conversations
         </h2>
-        <Suspense fallback={<ConversationsLoadingSkeleton />}>
-          <Conversations />
-        </Suspense>
+        <Conversations />
       </div>
     </div>
   );

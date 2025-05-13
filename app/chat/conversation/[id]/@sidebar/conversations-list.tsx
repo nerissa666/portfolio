@@ -1,7 +1,4 @@
-"use client";
-
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import ConversationPreview from "./conversation-preview";
 
 interface Conversation {
@@ -16,8 +13,6 @@ export default function ConversationList({
 }: {
   conversations: Conversation[];
 }) {
-  const pathname = usePathname();
-
   return (
     <div className="space-y-2">
       {conversations.map((conversation) => (
@@ -26,10 +21,7 @@ export default function ConversationList({
           href={`/chat/conversation/${conversation.id}`}
           className="block"
         >
-          <ConversationPreview
-            conversationId={conversation.id}
-            isActive={pathname === `/chat/conversation/${conversation.id}`}
-          />
+          <ConversationPreview conversationId={conversation.id} />
         </Link>
       ))}
     </div>
