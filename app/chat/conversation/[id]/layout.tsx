@@ -1,7 +1,14 @@
+import Sidebar from "./sidebar";
+
 export default function ChatLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return <div>{children}</div>;
+  return (
+    <div className="flex h-screen">
+      <Sidebar />
+      <div className="flex-1">{children}</div>
+    </div>
+  );
 }

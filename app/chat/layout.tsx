@@ -25,6 +25,7 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  console.log("root layout....");
   return (
     <Suspense>
       <ClerkProvider afterSignOutUrl="/chat">
