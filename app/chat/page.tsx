@@ -125,7 +125,7 @@ const PersonalContext = async () => {
   const userInfo = await getUserInformation();
 
   return (
-    <div className="mb-8 mt-8 bg-gray-50 p-6 rounded-lg border border-gray-200">
+    <div className="mb-8 mt-8">
       <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -184,7 +184,7 @@ const PersonalContext = async () => {
           </div>
         ))}
         {userInfo.length === 0 && (
-          <div className="text-center py-4 col-span-full">
+          <div className="col-span-full text-center py-12 bg-gray-50 rounded-md border border-gray-200">
             <p className="text-gray-500">No personal information stored yet.</p>
           </div>
         )}
@@ -325,7 +325,7 @@ const ConversationPreview = async ({
 
 const PersonalContextLoadingSkeleton = () => {
   return (
-    <div className="mb-8 mt-8 bg-gray-50 p-6 rounded-lg border border-gray-200 animate-pulse">
+    <div className="mb-8 mt-8">
       <div className="h-6 bg-gray-200 rounded w-1/4 mb-4"></div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {[1, 2].map((i) => (
