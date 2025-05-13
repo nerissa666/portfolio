@@ -370,3 +370,19 @@ export async function deleteUserInformation(
     return false;
   }
 }
+
+export async function deleteAllConversations(userId: string): Promise<void> {
+  // Get all conversation IDs for this user
+  const conversationIds = await redis.zrange(
+    `user:${userId}:conversations`,
+    0,
+    -1
+  );
+
+  // Delete each conversation and its messages
+  await Promise.all(
+    conversationIds.map(async (conversationId) => {
+      await deleteConversation(conversationId, userId);
+    })
+  );
+}

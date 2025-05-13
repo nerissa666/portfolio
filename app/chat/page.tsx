@@ -12,6 +12,7 @@ import {
   getFirstMessageOfConversation,
   getUserInformation,
   deleteUserInformation,
+  deleteAllConversations,
 } from "../db/redis";
 
 export default async function Page() {
@@ -42,36 +43,81 @@ const NewChat = ({ userId }: { userId: string }) => {
   return (
     <div className="flex justify-between items-center mb-6 border-b border-gray-200 pb-4">
       <h1 className="text-2xl font-bold text-gray-900">My Conversations</h1>
-      <form
-        action={async () => {
-          "use server";
-          const conversation = await createConversation({ userId });
-          redirect(`/chat/conversation/${conversation.id}`);
-        }}
-      >
-        <button
-          type="submit"
-          className="flex items-center justify-center py-2 px-6 rounded-md text-sm font-medium text-white bg-[#4A154B] hover:bg-[#611f69] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#4A154B] transition-colors"
+      <div className="flex gap-4">
+        <Suspense fallback={null}>
+          <ClearAllButton userId={userId} />
+        </Suspense>
+        <form
+          action={async () => {
+            "use server";
+            const conversation = await createConversation({ userId });
+            redirect(`/chat/conversation/${conversation.id}`);
+          }}
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-5 w-5 mr-2"
-            viewBox="0 0 20 20"
-            fill="currentColor"
+          <button
+            type="submit"
+            className="flex items-center justify-center py-2 px-6 rounded-md text-sm font-medium text-white bg-[#4A154B] hover:bg-[#611f69] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#4A154B] transition-colors"
           >
-            <path
-              fillRule="evenodd"
-              d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
-              clipRule="evenodd"
-            />
-          </svg>
-          New Chat
-          <span className="ml-2">
-            <SpinnerInForm />
-          </span>
-        </button>
-      </form>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5 mr-2"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fillRule="evenodd"
+                d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
+                clipRule="evenodd"
+              />
+            </svg>
+            New Chat
+            <span className="ml-2">
+              <SpinnerInForm />
+            </span>
+          </button>
+        </form>
+      </div>
     </div>
+  );
+};
+
+const ClearAllButton = async ({ userId }: { userId: string }) => {
+  const conversations = await getConversationsByUser(userId);
+
+  if (conversations.length === 0) {
+    return null;
+  }
+
+  return (
+    <form
+      action={async () => {
+        "use server";
+        await deleteAllConversations(userId);
+        revalidatePath("/chat");
+      }}
+    >
+      <button
+        type="submit"
+        className="flex items-center justify-center py-2 px-6 rounded-md text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="h-5 w-5 mr-2"
+          viewBox="0 0 20 20"
+          fill="currentColor"
+        >
+          <path
+            fillRule="evenodd"
+            d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+            clipRule="evenodd"
+          />
+        </svg>
+        Clear All
+        <span className="ml-2">
+          <SpinnerInForm />
+        </span>
+      </button>
+    </form>
   );
 };
 
