@@ -4,6 +4,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Link from "next/link";
 import { Suspense } from "react";
+import FullHeightContainer from "../components/full-height-container";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -39,8 +40,9 @@ export default function RootLayout({
             className={`${geistSans.variable} ${geistMono.variable} antialiased bg-grey-50`}
           >
             <TopNav />
-
-            <div className="max-w-5xl mx-auto">{children}</div>
+            <FullHeightContainer offset={60} className="overflow-y-hidden">
+              <div className="max-w-5xl mx-auto">{children}</div>
+            </FullHeightContainer>
           </body>
         </html>
       </ClerkProvider>
