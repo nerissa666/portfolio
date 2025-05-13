@@ -4,7 +4,6 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Link from "next/link";
 import { Suspense } from "react";
-import FullHeightContainer from "../components/full-height-container";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,16 +28,23 @@ export default function RootLayout({
   return (
     <Suspense>
       <ClerkProvider afterSignOutUrl="/chat">
-        <html lang="en" suppressHydrationWarning>
+        <html
+          lang="en"
+          suppressHydrationWarning
+          className={`${geistSans.variable} ${geistMono.variable}`}
+        >
           <head>
             <meta
               name="viewport"
               content="width=device-width, initial-scale=1.0, viewport-fit=cover"
             />
+            <style>{`
+              html {
+                font-family: var(--font-geist-sans);
+              }
+            `}</style>
           </head>
-          <body
-            className={`${geistSans.variable} ${geistMono.variable} antialiased bg-grey-50`}
-          >
+          <body className="antialiased bg-grey-50">
             <TopNav />
             <div className="max-w-5xl mx-auto">{children}</div>
           </body>

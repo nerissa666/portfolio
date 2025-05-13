@@ -144,8 +144,7 @@ export const getMessageReactNode = async (
           <Suspense
             fallback={
               <>
-                <Spinner />
-                <div className="h-12"></div>
+                <span id="spinner" />
               </>
             }
           >

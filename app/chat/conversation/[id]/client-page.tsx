@@ -50,10 +50,7 @@ export default function ClientPage({
         setMessages((prev) => [...prev, newNode]);
       }}
     >
-      <div
-        className="flex flex-col"
-        style={{ height: "calc(var(--vh, 1vh) * 100 - 60px)" }}
-      >
+      <div className="flex flex-col h-full">
         <div className="flex-1 overflow-y-auto">
           <div className="flex flex-col gap-4 p-4">
             {messages.length === 0 ||

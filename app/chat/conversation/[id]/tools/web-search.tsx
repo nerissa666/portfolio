@@ -36,15 +36,17 @@ export async function execute(
     const Component = async () => {
       const { results } = await exa.searchAndContents(args.query, {
         livecrawl: "always",
-        numResults: 3,
+        numResults: 10, // Increased from 3 to 5 results
       });
 
-      const searchResults: SearchResult[] = results.map((result: any) => ({
-        title: result.title,
-        url: result.url,
-        content: result.text.slice(0, 1000), // Take just the first 1000 characters
-        publishedDate: result.publishedDate,
-      }));
+      const searchResults: SearchResult[] = results.map(
+        (result: Record<string, any>) => ({
+          title: result.title,
+          url: result.url,
+          content: result.text.slice(0, 1500), // Increased from 1000 to 1500 characters
+          publishedDate: result.publishedDate,
+        })
+      );
 
       // Save the results
       saveToolCallResult(searchResults);
