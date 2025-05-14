@@ -5,7 +5,8 @@ const nextConfig = {
     ppr: true,
     inlineCss: true,
     reactCompiler: true,
-    viewTransition: true
+    viewTransition: true,
+    clientSegmentCache: true
   },
   eslint: {
     ignoreDuringBuilds: true,

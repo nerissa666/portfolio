@@ -1,7 +1,8 @@
 import { z } from "zod";
-import { listAllReminders } from "@/app/db/redis";
+import { CompleteToolCallPayload, listAllReminders } from "@/app/db/redis";
 import { fuzzySearch } from "./fuzzy-search";
 import { EditReminderDialog } from "./edit-reminder-dialog";
+import { ReactNode } from "react";
 
 const paramsSchema = z.object({
   searchQuery: z
@@ -27,7 +28,13 @@ export const specs = {
 
 export async function execute(
   args: ParamsType,
-  saveToolCallResult: <T>(result: T) => void
+  completeToolCallServerAction: (
+    payload: CompleteToolCallPayload
+  ) => Promise<ReactNode>,
+  toolCallData: {
+    toolCallId: string;
+    toolCallGroupId: string;
+  }
 ) {
   try {
     const reminders = await listAllReminders();
@@ -51,11 +58,6 @@ export async function execute(
       throw new Error("New content is required when editing a reminder");
     }
 
-    // Save the current state
-    saveToolCallResult(
-      "NOT DONE. WAITING FOR USER TO OPERATE. DO NOT SAY IT'S DONE!"
-    );
-
     // Return the confirmation dialog
     return (
       <EditReminderDialog
@@ -64,12 +66,16 @@ export async function execute(
         searchResults={searchResults}
         action={args.action}
         newContent={args.newContent}
+        completeToolCallServerAction={completeToolCallServerAction}
       />
     );
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "Failed to find reminder";
-    saveToolCallResult({ error: errorMessage });
+    await completeToolCallServerAction({
+      ...toolCallData,
+      result: { error: errorMessage },
+    });
     return <div className="text-red-500">{errorMessage}</div>;
   }
 }

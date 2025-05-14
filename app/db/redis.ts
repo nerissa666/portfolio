@@ -2,6 +2,7 @@ import Redis from "ioredis";
 import { v4 as uuid } from "uuid";
 import { CoreMessage } from "ai";
 import { auth } from "@clerk/nextjs/server";
+import { ToolCalls } from "@/app/chat/conversation/[id]/tools/tool-call-group/tool-call-group";
 
 type AiMessage = CoreMessage;
 
@@ -98,6 +99,7 @@ export async function deleteConversation(
   await redis.del(`conversation:${conversationId}`);
   await redis.zrem(`user:${userId}:conversations`, conversationId);
   await deleteMessagesByConversation(conversationId);
+  await deleteToolCallGroupsByConversation(conversationId);
 }
 
 export async function createMessage({
@@ -368,5 +370,223 @@ export async function deleteUserInformation(
   } catch (error) {
     console.error("Error deleting user information:", error);
     return false;
+  }
+}
+
+export async function deleteAllConversations(userId: string): Promise<void> {
+  // Get all conversation IDs for this user
+  const conversationIds = await redis.zrange(
+    `user:${userId}:conversations`,
+    0,
+    -1
+  );
+
+  // Delete each conversation and its messages
+  await Promise.all(
+    conversationIds.map(async (conversationId) => {
+      await deleteConversation(conversationId, userId);
+    })
+  );
+}
+
+/**
+ * Tool Call Group Types and Database Methods
+ * ----------------------------------------
+ * A ToolCallGroup represents a set of related tool calls and their results.
+ * Each group is identified by the toolCallId of its first tool call.
+ *
+ * Redis Schema:
+ * - toolCallGroup:{toolCallId} -> JSON string of ToolCallGroup object
+ *   - Stores the complete tool call group data including calls and results
+ * - conversation:{conversationId}:toolCallGroups -> Set of ToolCallGroup IDs
+ *   - Maps conversations to their tool call groups for efficient cleanup
+ */
+
+export interface ToolCallGroup {
+  userId: string; // Owner of the tool call group
+  conversationId: string; // Associated conversation
+  toolCalls: ToolCalls; // Original tool calls from the LLM
+  toolCallResults: Array<{
+    type: "tool-result";
+    toolCallId: string; // Matches the corresponding tool call
+    toolName: string; // Name of the tool that was called
+    args: unknown; // Arguments passed to the tool
+    result: unknown; // Result of the tool call (null if not completed)
+    $completed: boolean; // Whether the tool call has been completed
+  }>;
+}
+
+/**
+ * Creates a new tool call group for a set of tool calls.
+ * Initializes all tool call results as incomplete.
+ *
+ * @param userId - The ID of the user who owns the tool call group
+ * @param conversationId - The ID of the conversation this group belongs to
+ * @param toolCalls - The array of tool calls from the LLM
+ * @returns The created tool call group
+ */
+export async function createToolCallGroup({
+  conversationId,
+  toolCalls,
+}: {
+  conversationId: string;
+  toolCalls: ToolCalls;
+}): Promise<ToolCallGroup> {
+  const userId = await getUserId();
+  // Use the first tool call's ID as the group ID
+  const toolCallGroupId = toolCalls[0].toolCallId;
+  const toolCallGroup: ToolCallGroup = {
+    userId,
+    conversationId,
+    toolCalls,
+    toolCallResults: toolCalls.map(
+      (toolCall: { toolCallId: string; toolName: string; args: unknown }) => ({
+        type: "tool-result",
+        toolCallId: toolCall.toolCallId,
+        toolName: toolCall.toolName,
+        args: toolCall.args,
+        result: null,
+        $completed: false,
+      })
+    ),
+  };
+
+  // Use Redis transaction to ensure atomic updates
+  const multi = redis.multi();
+  multi.set(`toolCallGroup:${toolCallGroupId}`, JSON.stringify(toolCallGroup));
+  multi.sadd(`conversation:${conversationId}:toolCallGroups`, toolCallGroupId);
+  await multi.exec();
+
+  return toolCallGroup;
+}
+
+/**
+ * Retrieves a tool call group by its ID.
+ * Performs user authorization check to ensure the requesting user owns the group.
+ *
+ * @param toolCallGroupId - The ID of the tool call group (first tool call's ID)
+ * @returns The tool call group if found and authorized, null otherwise
+ * @throws Error if unauthorized access is attempted
+ */
+export async function getToolCallGroup(
+  toolCallGroupId: string
+): Promise<ToolCallGroup | null> {
+  const toolCallGroupStr = await redis.get(`toolCallGroup:${toolCallGroupId}`);
+  if (!toolCallGroupStr) return null;
+
+  const toolCallGroup = JSON.parse(toolCallGroupStr) as ToolCallGroup;
+
+  const userId = await getUserId();
+  if (toolCallGroup.userId !== userId) {
+    throw new Error("Unauthorized access to tool call group");
+  }
+
+  return toolCallGroup;
+}
+
+/**
+ * Retrieves an existing tool call group or creates a new one if it doesn't exist.
+ * This is useful when you want to ensure a tool call group exists before performing operations.
+ *
+ * @param conversationId - The ID of the conversation this group belongs to
+ * @param toolCalls - The array of tool calls from the LLM
+ * @returns The existing or newly created tool call group
+ */
+export async function getOrCreateToolCallGroup({
+  conversationId,
+  toolCalls,
+}: {
+  conversationId: string;
+  toolCalls: ToolCalls;
+}): Promise<ToolCallGroup> {
+  const toolCallGroupId = toolCalls[0].toolCallId;
+  const existingGroup = await getToolCallGroup(toolCallGroupId);
+
+  if (existingGroup) {
+    return existingGroup;
+  }
+
+  return createToolCallGroup({
+    conversationId,
+    toolCalls,
+  });
+}
+
+/**
+ * Completes a specific tool call within a tool call group.
+ * Updates the result and marks the tool call as completed.
+ * Performs validation to ensure:
+ * - The tool call group exists
+ * - The user is authorized
+ * - The tool call exists in the group
+ * - The tool call hasn't already been completed
+ *
+ * @param toolCallGroupId - The ID of the tool call group
+ * @param toolCallId - The ID of the specific tool call to complete
+ * @param result - The result of the tool call
+ * @returns The updated tool call group
+ * @throws Error if any validation fails
+ */
+
+export interface CompleteToolCallPayload {
+  toolCallGroupId: string;
+  toolCallId: string;
+  result: unknown;
+}
+
+export async function completeToolCall({
+  toolCallGroupId,
+  toolCallId,
+  result,
+}: CompleteToolCallPayload): Promise<ToolCallGroup> {
+  const toolCallGroup = await getToolCallGroup(toolCallGroupId);
+  if (!toolCallGroup) {
+    throw new Error("Tool call group not found");
+  }
+
+  const toolCallResultIndex = toolCallGroup.toolCallResults.findIndex(
+    (r) => r.toolCallId === toolCallId
+  );
+  if (toolCallResultIndex === -1) {
+    throw new Error("Tool call not found in group");
+  }
+
+  if (toolCallGroup.toolCallResults[toolCallResultIndex].$completed) {
+    throw new Error("Tool call already completed");
+  }
+
+  toolCallGroup.toolCallResults[toolCallResultIndex] = {
+    ...toolCallGroup.toolCallResults[toolCallResultIndex],
+    result,
+    $completed: true,
+  };
+
+  await redis.set(
+    `toolCallGroup:${toolCallGroupId}`,
+    JSON.stringify(toolCallGroup)
+  );
+
+  return toolCallGroup;
+}
+
+/**
+ * Deletes all tool call groups associated with a conversation.
+ * Used when cleaning up a conversation to prevent orphaned tool call groups.
+ *
+ * @param conversationId - The ID of the conversation to clean up
+ */
+export async function deleteToolCallGroupsByConversation(
+  conversationId: string
+): Promise<void> {
+  const toolCallGroupIds = await redis.smembers(
+    `conversation:${conversationId}:toolCallGroups`
+  );
+  if (toolCallGroupIds.length) {
+    const multi = redis.multi();
+    toolCallGroupIds.forEach((id) => {
+      multi.del(`toolCallGroup:${id}`);
+    });
+    multi.del(`conversation:${conversationId}:toolCallGroups`);
+    await multi.exec();
   }
 }

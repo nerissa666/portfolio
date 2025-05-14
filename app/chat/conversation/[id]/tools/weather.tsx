@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { CompleteToolCallPayload } from "@/app/db/redis";
+import { ReactNode } from "react";
 
 const paramsSchema = z.object({
   location: z
@@ -95,46 +97,67 @@ function getWeatherDescription(code: number): string {
 
 export async function execute(
   args: ParamsType,
-  saveToolCallResult: <T>(result: T) => void
+  completeToolCallServerAction: (
+    payload: CompleteToolCallPayload
+  ) => Promise<ReactNode>,
+  {
+    toolCallId,
+    toolCallGroupId,
+  }: {
+    toolCallId: string;
+    toolCallGroupId: string;
+  }
 ) {
   try {
     const weatherData = await getWeatherData(args.location, args.units);
-    saveToolCallResult(weatherData);
+    const node = await completeToolCallServerAction({
+      toolCallGroupId,
+      toolCallId,
+      result: weatherData,
+    });
 
     return (
-      <div className="p-4 bg-white rounded-lg shadow">
-        <h3 className="text-lg font-semibold mb-2">
-          Weather in {args.location}
-        </h3>
-        <div className="flex items-center gap-4">
-          <span className="text-4xl">{weatherData.icon}</span>
-          <div>
-            <p className="text-2xl font-bold">
-              {weatherData.temperature}°{args.units === "metric" ? "C" : "F"}
-            </p>
-            <p className="text-gray-600 capitalize">
-              {weatherData.description}
-            </p>
+      <>
+        {node}
+        <div className="p-4 bg-white rounded-lg shadow">
+          <h3 className="text-lg font-semibold mb-2">
+            Weather in {args.location}
+          </h3>
+          <div className="flex items-center gap-4">
+            <span className="text-4xl">{weatherData.icon}</span>
+            <div>
+              <p className="text-2xl font-bold">
+                {weatherData.temperature}°{args.units === "metric" ? "C" : "F"}
+              </p>
+              <p className="text-gray-600 capitalize">
+                {weatherData.description}
+              </p>
+            </div>
+          </div>
+          <div className="mt-4 grid grid-cols-2 gap-4">
+            <div>
+              <p className="text-sm text-gray-500">Humidity</p>
+              <p className="font-medium">{weatherData.humidity}%</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Wind Speed</p>
+              <p className="font-medium">
+                {weatherData.windSpeed}{" "}
+                {args.units === "metric" ? "m/s" : "mph"}
+              </p>
+            </div>
           </div>
         </div>
-        <div className="mt-4 grid grid-cols-2 gap-4">
-          <div>
-            <p className="text-sm text-gray-500">Humidity</p>
-            <p className="font-medium">{weatherData.humidity}%</p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-500">Wind Speed</p>
-            <p className="font-medium">
-              {weatherData.windSpeed} {args.units === "metric" ? "m/s" : "mph"}
-            </p>
-          </div>
-        </div>
-      </div>
+      </>
     );
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "Failed to fetch weather data";
-    saveToolCallResult({ error: errorMessage });
+    await completeToolCallServerAction({
+      toolCallGroupId: "",
+      toolCallId: "",
+      result: { error: errorMessage },
+    });
     return <div className="text-red-500">{errorMessage}</div>;
   }
 }

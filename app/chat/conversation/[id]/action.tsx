@@ -1,34 +1,43 @@
 "use server";
 
-import { ReactNode, Suspense } from "react";
-import { Spinner } from "./spinner";
-import {
-  AssistantMessageWrapper,
-  ParseToMarkdown,
-  ToolCallWrapper,
-  UserMessageWrapper,
-} from "./render-message";
-import { createMarkdownBlockGeneratorFromLlmReader } from "./parser";
-import { DeleteAllNodesWithMessageId } from "./delete-all-nodes-with-message-id";
-import { getLlmStream } from "./tools/llm";
 import {
   createMessage,
   getMessagesByConversation,
   Message,
 } from "@/app/db/redis";
+import React, { ReactNode, Suspense } from "react";
 import { v4 as uuid } from "uuid";
-import { EXECUTE_TOOLS } from "./tools/tools";
-import React from "react";
-import { GetNewResponse } from "./get-new-response-context";
-import { ToolCallProvider } from "./tools/tool-call-context";
+import { AssistantMessageWrapperV2 } from "./assistant-message-wrapper-v2";
+import { DeleteAllNodesWithMessageId } from "./delete-all-nodes-with-message-id";
 import { extractUserInformation } from "./extract-user-information";
+import { createMarkdownBlockGeneratorFromLlmReader } from "./parser";
+import {
+  AssistantMessageWrapper,
+  ParseToMarkdown,
+  UserMessageWrapper,
+} from "./render-message";
+import { Spinner } from "./spinner";
 import Collapsable from "./tools/collapsable.client";
+import { getLlmStream } from "./tools/llm";
+import {
+  ToolCallGroup,
+  ToolCalls,
+} from "./tools/tool-call-group/tool-call-group";
 
 const getMessages = async (conversationId: string): Promise<Message[]> => {
   const messages = await getMessagesByConversation(conversationId);
+  console.log(JSON.stringify(messages, null, 2));
   return messages;
 };
 
+const isToolCallMessage = (message: Message) => {
+  return (
+    message.role === "assistant" &&
+    Array.isArray(message.content) &&
+    message.content.length > 0 &&
+    message.content[0].type === "tool-call"
+  );
+};
 //////////
 /**
  * Client appends a new user message for a specific conversation.
@@ -44,21 +53,64 @@ export const getMessageReactNode = async (
   // based on the chat history. Otherwise, it will first save the messageContent
   // as a user message to the DB, and then generate a new message from the assistant
   // based on the chat history + the new user message.
-  messageContent: string | null,
-  onlineSearchEnabled: boolean
+  messageContent: string | null
 ): Promise<ReactNode> => {
-  if (messageContent !== null) {
-    await createMessage({
-      conversationId,
-      aiMessage: {
-        role: "user",
-        content: messageContent,
-      },
-    });
+  const messages = await getMessages(conversationId);
+  const lastMessage = messages.at(-1);
+
+  if (
+    messageContent !== null &&
+    lastMessage &&
+    isToolCallMessage(lastMessage)
+  ) {
+    return (
+      <div className="flex items-start mb-4">
+        <div className="w-8 h-8 rounded-full bg-red-500 text-white flex-shrink-0 mr-3 flex items-center justify-center text-sm font-semibold">
+          !
+        </div>
+        <div className="max-w-[85%] bg-red-50 p-3 rounded-lg shadow-sm border-l-4 border-red-300 hover:shadow-md transition-shadow duration-200">
+          <div className="flex items-center mb-2 text-red-700 font-medium">
+            <svg
+              className="w-5 h-5 mr-2"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                key="warning-path-1"
+              />
+            </svg>
+            Cannot Send Message
+          </div>
+          <p className="text-gray-700">
+            Please complete the pending tool call interactions before sending a
+            new message.
+          </p>
+        </div>
+      </div>
+    );
   }
 
-  const messages = await getMessages(conversationId);
-  const llmStream = await getLlmStream(messages);
+  const newUserMessage: Message | null =
+    messageContent !== null
+      ? await createMessage({
+          conversationId,
+          aiMessage: {
+            role: "user",
+            content: messageContent,
+          },
+        })
+      : null;
+
+  const llmStream = await getLlmStream([
+    ...messages,
+    ...(newUserMessage ? [newUserMessage] : []),
+  ]);
 
   const extractUserInformationPromise = messageContent
     ? extractUserInformation(
@@ -78,7 +130,7 @@ export const getMessageReactNode = async (
     const extractedUserInformation = await extractUserInformationPromise;
     if (extractedUserInformation.found) {
       return (
-        <Collapsable title="Personal Information Learned">
+        <Collapsable title="Recorded personal info">
           Debug Info: We learned [{extractedUserInformation.information}]
         </Collapsable>
       );
@@ -86,19 +138,6 @@ export const getMessageReactNode = async (
       return null;
     }
   };
-
-  if (messageContent !== null) {
-    // TODO: this implementation is ugly, we should not have to create a new message
-    if (onlineSearchEnabled) {
-      await createMessage({
-        conversationId,
-        aiMessage: {
-          role: "system",
-          content: `MUST answer with web-search.`,
-        },
-      });
-    }
-  }
 
   const StreamAssistantMessage = async () => {
     // For a new message to LLM, you need to send all previous messages
@@ -144,7 +183,7 @@ export const getMessageReactNode = async (
         );
       }
 
-      const Wrapper = isFirstChunk ? AssistantMessageWrapper : React.Fragment;
+      const Wrapper = isFirstChunk ? AssistantMessageWrapperV2 : React.Fragment;
       isFirstChunk = false;
 
       return (
@@ -156,12 +195,15 @@ export const getMessageReactNode = async (
           <Suspense
             fallback={
               <>
-                <Spinner />
-                <div className="h-12"></div>
+                <span id="spinner" />
               </>
             }
           >
-            <StreamableParse accumulator={accumulator + "\n" + block} />
+            <StreamableParse
+              accumulator={
+                accumulator.length === 0 ? block : accumulator + "\n" + block
+              }
+            />
           </Suspense>
         </Wrapper>
       );
@@ -170,20 +212,17 @@ export const getMessageReactNode = async (
     return <StreamableParse />;
   };
 
-  const {
-    promise: allToolCallResultsSavedPromise,
-    resolve: allToolCallResultsSaved,
-  } = withResolvers<{
-    numberOfToolCalls: number;
-  }>();
+  // const {
+  //   promise: allToolCallResultsSavedPromise,
+  //   resolve: allToolCallResultsSaved,
+  // } = withResolvers<{
+  //   numberOfToolCalls: number;
+  // }>();
 
   const StreamToolCalls = async () => {
     const toolCalls = await llmStream.toolCalls;
 
     if (toolCalls.length === 0) {
-      allToolCallResultsSaved({
-        numberOfToolCalls: 0,
-      });
       return null;
     }
 
@@ -196,90 +235,110 @@ export const getMessageReactNode = async (
       },
     });
 
-    const resultResolvers = toolCalls.map(() => withResolvers<unknown>());
+    return (
+      <ToolCallGroup conversationId={conversationId} toolCalls={toolCalls} />
+    );
 
-    // we only un-suspend MessageAfterToolCallResults component after all
-    // tool calls have received their results
-    Promise.all(resultResolvers.map((r) => r.promise)).then((results) => {
-      // save the output from all tool calls to DB in one go, this is the expected
-      // schema from the API.
-      createMessage({
-        conversationId,
-        aiMessage: {
-          role: "tool",
-          content: toolCalls.map((t, index) => ({
-            type: "tool-result",
-            toolCallId: t.toolCallId,
-            toolName: t.toolName,
-            args: t.args,
-            result: results[index],
-          })),
-        },
-      }).then(() => {
-        allToolCallResultsSaved({
-          numberOfToolCalls: toolCalls.length,
-        });
-      });
-    });
+    // if (toolCalls.length === 0) {
+    //   allToolCallResultsSaved({
+    //     numberOfToolCalls: 0,
+    //   });
+    //   return null;
+    // }
 
-    return toolCalls.map((toolCall, index) => {
-      const RenderToolCall = async () => {
-        const toolCallResultSaved = <T,>(result: T) => {
-          resultResolvers[index].resolve(result);
-        };
+    // // save tool_calls (the instruction to call the tools) to DB first
+    // await createMessage({
+    //   conversationId,
+    //   aiMessage: {
+    //     role: "assistant",
+    //     content: toolCalls,
+    //   },
+    // });
 
-        const { toolName, args } = toolCall;
+    // const resultResolvers = toolCalls.map(() => withResolvers<unknown>());
 
-        // TODO: Typically, MessageAfterToolCallResults is suspended until
-        // this callback resolves the promise. So, if this callback resolves
-        // the promise after the streaming times out, the chat will be
-        // in a broken state. Specifically, this would mean that this method
-        // CANNOT support client components resolving the promise because
-        // client components may be resolved at an arbitrary time in the future,
-        // like in a click handler, and the streaming may have already timed out.
-        const saveToolCallResult = async <RESULT,>(result: RESULT) => {
-          "use server";
-          toolCallResultSaved(result);
-        };
+    // // we only un-suspend MessageAfterToolCallResults component after all
+    // // tool calls have received their results
+    // Promise.all(resultResolvers.map((r) => r.promise)).then((results) => {
+    //   // save the output from all tool calls to DB in one go, this is the expected
+    //   // schema from the API.
+    //   createMessage({
+    //     conversationId,
+    //     aiMessage: {
+    //       role: "tool",
+    //       content: toolCalls.map((t, index) => ({
+    //         type: "tool-result",
+    //         toolCallId: t.toolCallId,
+    //         toolName: t.toolName,
+    //         args: t.args,
+    //         result: results[index],
+    //       })),
+    //     },
+    //   }).then(() => {
+    //     allToolCallResultsSaved({
+    //       numberOfToolCalls: toolCalls.length,
+    //     });
+    //   });
+    // });
 
-        const result = await EXECUTE_TOOLS[
-          toolName as keyof typeof EXECUTE_TOOLS
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ](args as any, saveToolCallResult);
-        // TODO: fix type safety
-        return (
-          <ToolCallWrapper>
-            <ToolCallProvider
-              conversationId={conversationId}
-              toolCall={toolCall}
-            >
-              {result}
-            </ToolCallProvider>
-          </ToolCallWrapper>
-        );
-      };
-      return (
-        <Suspense fallback={<Spinner />} key={toolCall.toolCallId}>
-          <RenderToolCall />
-        </Suspense>
-      );
-    });
+    // return toolCalls.map((toolCall, index) => {
+    //   const RenderToolCall = async () => {
+    //     const toolCallResultSaved = <T,>(result: T) => {
+    //       resultResolvers[index].resolve(result);
+    //     };
+
+    //     const { toolName, args } = toolCall;
+
+    //     // TODO: Typically, MessageAfterToolCallResults is suspended until
+    //     // this callback resolves the promise. So, if this callback resolves
+    //     // the promise after the streaming times out, the chat will be
+    //     // in a broken state. Specifically, this would mean that this method
+    //     // CANNOT support client components resolving the promise because
+    //     // client components may be resolved at an arbitrary time in the future,
+    //     // like in a click handler, and the streaming may have already timed out.
+    //     const saveToolCallResult = async <RESULT,>(result: RESULT) => {
+    //       "use server";
+    //       toolCallResultSaved(result);
+    //     };
+
+    //     const result = await EXECUTE_TOOLS[
+    //       toolName as keyof typeof EXECUTE_TOOLS
+    //       // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    //     ](args as any, saveToolCallResult);
+    //     // TODO: fix type safety
+    //     return (
+    //       <ToolCallWrapper>
+    //         <ToolCallProvider
+    //           conversationId={conversationId}
+    //           toolCall={toolCall}
+    //         >
+    //           {result}
+    //         </ToolCallProvider>
+    //       </ToolCallWrapper>
+    //     );
+    //   };
+    //   return (
+    //     <Suspense fallback={<Spinner />} key={toolCall.toolCallId}>
+    //       <RenderToolCall />
+    //     </Suspense>
+    //   );
+    // });
   };
 
-  // If AI returns a function_call instruction, we need to first call the function
-  // with given parameters, and then append the instruction + the result to the chat history.
-  // And then, we recursively get the next message AGAIN from the LLM.
-  const MessageAfterToolCallResults = async () => {
-    const { numberOfToolCalls } = await allToolCallResultsSavedPromise;
-    // shouldRefresh is set to true only when the last response is a function_call
-    // and we need to append the result of the function_call to the chat history
-    // and then ask LLM to produce one more output from there.
-    // otherwise, we just do nothing (to avoid infinite loops)
-    if (numberOfToolCalls > 0) {
-      return <GetNewResponse />;
-    }
-    return null;
-  };
+  // // If AI returns a function_call instruction, we need to first call the function
+  // // with given parameters, and then append the instruction + the result to the chat history.
+  // // And then, we recursively get the next message AGAIN from the LLM.
+  // const MessageAfterToolCallResults = async () => {
+  //   const { numberOfToolCalls } = await allToolCallResultsSavedPromise;
+  //   // shouldRefresh is set to true only when the last response is a function_call
+  //   // and we need to append the result of the function_call to the chat history
+  //   // and then ask LLM to produce one more output from there.
+  //   // otherwise, we just do nothing (to avoid infinite loops)
+  //   if (numberOfToolCalls > 0) {
+  //     return <GetNewResponse />;
+  //   }
+  //   return null;
+  // };
 
   return (
     <>
@@ -297,9 +356,9 @@ export const getMessageReactNode = async (
       <Suspense fallback={null}>
         <StreamToolCalls />
       </Suspense>
-      <Suspense fallback={null}>
+      {/* <Suspense fallback={null}>
         <MessageAfterToolCallResults />
-      </Suspense>
+      </Suspense> */}
     </>
   );
 };
@@ -328,6 +387,20 @@ export const getInitialMessagesReactNode = async (
           );
         }
 
+        if (
+          message.role === "assistant" &&
+          Array.isArray(message.content) &&
+          message.content.length > 0 &&
+          message.content[0].type === "tool-call"
+        ) {
+          return (
+            <ToolCallGroup
+              key={index}
+              toolCalls={message.content as ToolCalls}
+              conversationId={conversationId}
+            />
+          );
+        }
         // after refreshing the tab, we will lose the UI for the tool calls,
         // but the AI should have gotten the result of the tool calls, so we
         // don't need to do anything here. however, it would be ideal to
@@ -343,18 +416,18 @@ export const getInitialMessagesReactNode = async (
  * Useful for coordinating asynchronous operations that need to be resolved
  * from outside the promise's executor function.
  */
-function withResolvers<T>() {
-  let resolve: (value: T | PromiseLike<T>) => void;
-  let reject: (reason?: unknown) => void;
+// function withResolvers<T>() {
+//   let resolve: (value: T | PromiseLike<T>) => void;
+//   let reject: (reason?: unknown) => void;
 
-  const promise = new Promise<T>((res, rej) => {
-    resolve = res;
-    reject = rej;
-  });
+//   const promise = new Promise<T>((res, rej) => {
+//     resolve = res;
+//     reject = rej;
+//   });
 
-  return {
-    promise,
-    resolve: resolve!,
-    reject: reject!,
-  };
-}
+//   return {
+//     promise,
+//     resolve: resolve!,
+//     reject: reject!,
+//   };
+// }
