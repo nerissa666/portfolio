@@ -11,9 +11,7 @@ export const UserMessageWrapper = ({
         U
       </div>
       <div className="max-w-[85%] bg-white p-3 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200">
-        <div className="markdown-content prose prose-gray prose-sm max-w-none whitespace-pre-line">
-          {children}
-        </div>
+        <div className="whitespace-pre-line">{children}</div>
       </div>
     </div>
   );
@@ -30,9 +28,7 @@ export const AssistantMessageWrapper = ({
         AI
       </div>
       <div className="max-w-[85%] bg-blue-50 p-3 rounded-lg shadow-sm border-l-4 border-blue-300 hover:shadow-md transition-shadow duration-200">
-        <div className="markdown-content prose prose-indigo prose-sm max-w-none">
-          {children}
-        </div>
+        <div className="prose">{children}</div>
       </div>
     </div>
   );
@@ -69,9 +65,7 @@ export const ToolCallWrapper = ({
           </svg>
           Tool Call
         </div>
-        <div className="markdown-content prose prose-amber prose-sm max-w-none">
-          {children}
-        </div>
+        <div className="prose">{children}</div>
       </div>
     </div>
   );
@@ -85,11 +79,14 @@ export const ParseToMarkdown = async ({
   "data-message-id"?: string;
 }) => {
   const html = await marked(block);
+
   return (
-    <div
-      data-message-id={messageId}
-      className="animate-fade-in motion-safe:animate-fadeIn"
-      dangerouslySetInnerHTML={{ __html: html }}
-    />
+    <>
+      <div
+        data-message-id={messageId}
+        className="animate-fade-in motion-safe:animate-fadeIn"
+        dangerouslySetInnerHTML={{ __html: html }}
+      />
+    </>
   );
 };

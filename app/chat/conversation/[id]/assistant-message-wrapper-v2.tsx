@@ -82,9 +82,7 @@ const AssistantMessageWrapperV2_Content = ({
           }}
         >
           <div className="relative bg-blue-50 p-3 rounded-lg">
-            <div className="markdown-content prose prose-indigo prose-sm max-w-none">
-              {children}
-            </div>
+            <div className="prose">{children}</div>
           </div>
 
           {/* Inline styles for the animation */}
@@ -109,9 +107,7 @@ const AssistantMessageWrapperV2_Content = ({
         AI
       </div>
       <div className="max-w-[85%] bg-blue-50 p-3 rounded-lg shadow-sm border-l-4 border-blue-300 hover:shadow-md transition-shadow duration-200">
-        <div className="markdown-content prose prose-indigo prose-sm max-w-none">
-          {children}
-        </div>
+        <div className="prose">{children}</div>
       </div>
     </div>
   );
