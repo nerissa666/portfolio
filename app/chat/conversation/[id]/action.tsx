@@ -148,7 +148,11 @@ export const getMessageReactNode = async (
               </>
             }
           >
-            <StreamableParse accumulator={accumulator + "\n" + block} />
+            <StreamableParse
+              accumulator={
+                accumulator.length === 0 ? block : accumulator + "\n" + block
+              }
+            />
           </Suspense>
         </Wrapper>
       );
