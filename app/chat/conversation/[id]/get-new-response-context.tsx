@@ -68,7 +68,7 @@ export function GetNewResponse() {
   }, [context, hasTriggered]);
 
   if (isLoading) {
-    return <>Tool Call Completed. Retrieving new response...</>;
+    return null;
   }
 
   return null;

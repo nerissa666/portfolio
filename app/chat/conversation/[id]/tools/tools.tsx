@@ -22,8 +22,8 @@ export const TOOLS = {
 export const EXECUTE_TOOLS = {
   calculator: calculator.execute,
   weather: weather.execute,
-  addReminder: addReminder.execute,
-  showReminders: showReminders.execute,
-  editReminder: editReminder.execute,
   webSearch: webSearch.execute,
+  showReminders: showReminders.execute,
+  addReminder: addReminder.execute,
+  editReminder: editReminder.execute,
 } as const;
