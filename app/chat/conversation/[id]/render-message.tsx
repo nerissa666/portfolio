@@ -1,4 +1,4 @@
-import { marked } from "marked";
+import { MarkdownParser } from "./markdown-parser";
 
 export const UserMessageWrapper = ({
   children,
@@ -56,7 +56,26 @@ export const ToolCallWrapper = ({
   );
 };
 
-export const NoParseToMarkdown = async ({
+// export const NoParseToMarkdown = async ({
+//   block,
+//   "data-message-id": messageId,
+// }: {
+//   block: string;
+//   "data-message-id"?: string;
+// }) => {
+//   return (
+//     <>
+//       <div
+//         data-message-id={messageId}
+//         className="animate-fade-in motion-safe:animate-fadeIn max-w-none whitespace-pre-wrap"
+//       >
+//         {block}
+//       </div>
+//     </>
+//   );
+// };
+
+export const ParseToMarkdown = async ({
   block,
   "data-message-id": messageId,
 }: {
@@ -64,26 +83,11 @@ export const NoParseToMarkdown = async ({
   "data-message-id"?: string;
 }) => {
   return (
-    <>
-      <div
-        data-message-id={messageId}
-        className="animate-fade-in motion-safe:animate-fadeIn max-w-none whitespace-pre-wrap"
-      >
-        {block}
-      </div>
-    </>
-  );
-};
-
-export const ParseToMarkdown = async ({ block }: { block: string }) => {
-  const html = await marked(block);
-
-  return (
-    <>
-      <div
-        className="animate-fade-in motion-safe:animate-fadeIn max-w-none"
-        dangerouslySetInnerHTML={{ __html: html }}
-      />
-    </>
+    <div
+      data-message-id={messageId}
+      className="animate-fade-in motion-safe:animate-fadeIn max-w-none"
+    >
+      <MarkdownParser content={block} />
+    </div>
   );
 };

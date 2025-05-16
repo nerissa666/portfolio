@@ -107,11 +107,7 @@ export const execute: ExecuteFunction<ParamsType> = async ({
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "Failed to perform web search";
-    await completeToolCallServerAction({
-      toolCallGroupId: "",
-      toolCallId: "",
-      result: { error: errorMessage },
-    });
+    await completeToolCallRsc({ error: errorMessage });
     return <div className="text-red-500">{errorMessage}</div>;
   }
 };

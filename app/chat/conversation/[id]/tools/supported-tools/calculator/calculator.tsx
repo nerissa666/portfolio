@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { ExecuteFunction } from "../tools";
+import { ReactNode } from "react";
 
 const paramsSchema = z.object({
   a: z.number(),
@@ -30,7 +31,7 @@ const CalculatorBase = async ({
   completeToolCallRsc,
 }: {
   args: ParamsType;
-  completeToolCallRsc: (result: unknown) => Promise<void>;
+  completeToolCallRsc: (result: unknown) => Promise<ReactNode>;
 }) => {
   const { a, b, operation } = args;
   let result: number;
