@@ -24,6 +24,7 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 222.2 84% 4.9%;
     --radius: 0.5rem;
+    --base-font-size: 14px;
   }
 
   .dark {
@@ -81,6 +82,12 @@
   .prose {
     @apply max-w-none;
     font-family: var(--font-geist-sans);
+    font-size: var(--base-font-size);
+  }
+
+  .prose p {
+    @apply m-0 text-slate-700 leading-relaxed font-normal;
+    font-size: var(--base-font-size);
   }
 
   .prose pre {
@@ -89,8 +96,9 @@
   }
 
   .prose code {
-    @apply bg-slate-100 px-1.5 py-0.5 rounded text-slate-700 text-sm;
+    @apply bg-slate-100 px-1.5 py-0.5 rounded text-slate-700;
     font-family: var(--font-geist-mono);
+    font-size: calc(var(--base-font-size) * 0.875);
   }
 
   .prose pre code {
@@ -99,36 +107,46 @@
 
   /* Typography System */
   .prose h1 {
-    @apply text-2xl font-semibold tracking-tight text-slate-900 mb-6;
+    font-size: calc(var(--base-font-size) * 2);
+    @apply font-semibold tracking-tight text-slate-900 mb-4;
   }
 
   .prose h2 {
-    @apply text-xl font-semibold tracking-tight text-slate-800 mb-4;
+    font-size: calc(var(--base-font-size) * 1.5);
+    @apply font-semibold tracking-tight text-slate-800 mb-3;
   }
 
   .prose h3 {
-    @apply text-lg font-medium text-slate-800 mb-3;
+    font-size: calc(var(--base-font-size) * 1.25);
+    @apply font-medium text-slate-800 mb-2;
   }
 
   .prose h4 {
-    @apply text-base font-medium text-slate-800 mb-2;
-  }
-
-  .prose p {
-    @apply text-slate-700 leading-relaxed mb-4 text-[15px] font-normal;
+    font-size: calc(var(--base-font-size) * 1.125);
+    @apply font-medium text-slate-800 mb-1.5;
   }
 
   .prose ul,
   .prose ol {
-    @apply text-slate-700 leading-relaxed mb-4 text-[15px];
+    @apply text-slate-700 leading-relaxed mb-2;
+    font-size: var(--base-font-size);
   }
 
   .prose li {
-    @apply mb-1;
+    @apply mb-0.5;
+  }
+
+  .prose li > p {
+    @apply mb-0;
+  }
+
+  .prose li + li {
+    @apply mt-0.5;
   }
 
   .prose blockquote {
-    @apply border-l-4 border-slate-200 pl-4 italic text-slate-600 bg-slate-50/50 py-2 px-4 rounded-r-lg;
+    @apply border-l-4 border-slate-200 pl-4 italic text-slate-600 bg-slate-50/50 py-1.5 px-4 rounded-r-lg mb-2;
+    font-size: var(--base-font-size);
   }
 
   .prose a {
@@ -144,11 +162,11 @@
   }
 
   .prose hr {
-    @apply border-slate-200 my-8;
+    @apply border-slate-200 my-4;
   }
 
   .prose table {
-    @apply w-full border-collapse mb-4 rounded-lg overflow-hidden shadow-sm;
+    @apply w-full border-collapse mb-2 rounded-lg overflow-hidden shadow-sm;
   }
 
   .prose th {

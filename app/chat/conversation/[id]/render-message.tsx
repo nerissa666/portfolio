@@ -7,7 +7,7 @@ export const UserMessageWrapper = ({
 }) => {
   return (
     <div className="mb-4 pb-2">
-      <div className="bg-gray-50 rounded-lg p-3">
+      <div className="border-l-2 border-gray-200 pl-4">
         <div className="text-xs font-medium text-gray-500 mb-1.5">User</div>
         <div className="prose prose-gray max-w-none">
           <div className="whitespace-pre-line max-w-none text-gray-800">

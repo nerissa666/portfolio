@@ -3,6 +3,7 @@ import { ReactNode, useState, useEffect, useRef } from "react";
 import { RenderFromPending } from "./render-from-pending";
 import { type getMessageReactNode as getMessageReactNodeType } from "./action";
 import { NewResponseProvider } from "./get-new-response-context";
+import { FontSizeControl } from "./font-size-control";
 
 export default function ClientPage({
   conversationId,
@@ -50,7 +51,8 @@ export default function ClientPage({
         setMessages((prev) => [...prev, newNode]);
       }}
     >
-      <div className="flex flex-col h-full bg-gray-50">
+      <div className="flex flex-col h-[calc(100vh-60px)]">
+        <FontSizeControl />
         <div className="flex-1 overflow-y-auto">
           <div className="max-w-5xl min-w-5xl mx-auto px-4 py-8">
             {messages.length === 0 ||
