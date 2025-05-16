@@ -46,7 +46,7 @@ export default function RootLayout({
           </head>
           <body className="antialiased bg-grey-50">
             <TopNav />
-            <div className="max-w-5xl mx-auto">{children}</div>
+            <div className="max-w-7xl mx-auto">{children}</div>
           </body>
         </html>
       </ClerkProvider>
@@ -57,7 +57,7 @@ export default function RootLayout({
 const TopNav = () => {
   return (
     <nav className="sticky top-0 border-b bg-gray-900 z-10 h-[60px]">
-      <div className="max-w-5xl mx-auto px-4 py-4 flex justify-between items-center">
+      <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
         <Link
           href="/chat"
           className="flex items-center gap-2 text-white hover:text-gray-300"

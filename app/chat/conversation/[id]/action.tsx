@@ -10,9 +10,12 @@ import { v4 as uuid } from "uuid";
 import { AssistantMessageWrapperV2 } from "./assistant-message-wrapper-v2";
 import { DeleteAllNodesWithMessageId } from "./delete-all-nodes-with-message-id";
 import { extractUserInformation } from "./extract-user-information";
-import { createMarkdownBlockGeneratorFromLlmReader } from "./parser";
 import {
-  AssistantMessageWrapper,
+  createMarkdownBlockGeneratorFromLlmReader,
+  createPassthroughBlockGeneratorFromLlmReader,
+} from "./parser";
+import {
+  NoParseToMarkdown,
   ParseToMarkdown,
   UserMessageWrapper,
 } from "./render-message";
@@ -188,7 +191,7 @@ export const getMessageReactNode = async (
 
       return (
         <Wrapper>
-          <ParseToMarkdown
+          <NoParseToMarkdown
             data-message-id={newMessageId.toString()}
             block={block}
           />
@@ -378,7 +381,7 @@ export const getInitialMessagesReactNode = async (
           const Wrapper =
             message.role === "user"
               ? UserMessageWrapper
-              : AssistantMessageWrapper;
+              : AssistantMessageWrapperV2;
 
           return (
             <Wrapper key={index}>

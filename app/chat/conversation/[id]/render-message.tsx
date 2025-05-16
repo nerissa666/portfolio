@@ -6,29 +6,12 @@ export const UserMessageWrapper = ({
   children: React.ReactNode;
 }) => {
   return (
-    <div className="flex items-start mb-4">
-      <div className="w-8 h-8 rounded-full bg-gray-300 flex-shrink-0 mr-3 flex items-center justify-center text-sm font-semibold">
-        U
-      </div>
-      <div className="max-w-[85%] bg-white p-3 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200">
-        <div className="whitespace-pre-line">{children}</div>
-      </div>
-    </div>
-  );
-};
-
-export const AssistantMessageWrapper = ({
-  children,
-}: {
-  children: React.ReactNode;
-}) => {
-  return (
-    <div className="flex items-start mb-4">
-      <div className="w-8 h-8 rounded-full bg-blue-500 text-white flex-shrink-0 mr-3 flex items-center justify-center text-sm font-semibold">
-        AI
-      </div>
-      <div className="max-w-[85%] bg-blue-50 p-3 rounded-lg shadow-sm border-l-4 border-blue-300 hover:shadow-md transition-shadow duration-200">
-        <div className="prose">{children}</div>
+    <div className="mb-12 pb-8 border-b border-gray-100 last:border-b-0 last:mb-0 last:pb-0">
+      <div className="text-sm font-medium text-gray-500 mb-3">You</div>
+      <div className="prose prose-gray max-w-none">
+        <div className="whitespace-pre-line max-w-none text-gray-800">
+          {children}
+        </div>
       </div>
     </div>
   );
@@ -40,9 +23,9 @@ export const ToolCallWrapper = ({
   children: React.ReactNode;
 }) => {
   return (
-    <div className="flex items-start mb-4 pl-11">
-      <div className="max-w-[85%] bg-amber-50 p-3 rounded-lg shadow-sm border-l-4 border-amber-300 hover:shadow-md transition-shadow duration-200">
-        <div className="flex items-center mb-1 text-xs text-amber-700 font-medium">
+    <div className="mb-12 pb-8 border-b border-gray-100 last:border-b-0 last:mb-0 last:pb-0">
+      <div className="pl-4 border-l-4 border-amber-300">
+        <div className="flex items-center mb-3 text-xs text-amber-700 font-medium">
           <svg
             className="w-4 h-4 mr-1"
             fill="none"
@@ -65,26 +48,40 @@ export const ToolCallWrapper = ({
           </svg>
           Tool Call
         </div>
-        <div className="prose">{children}</div>
+        <div className="prose prose-amber max-w-none text-gray-800">
+          {children}
+        </div>
       </div>
     </div>
   );
 };
 
-export const ParseToMarkdown = async ({
+export const NoParseToMarkdown = async ({
   block,
   "data-message-id": messageId,
 }: {
   block: string;
   "data-message-id"?: string;
 }) => {
+  return (
+    <>
+      <div
+        data-message-id={messageId}
+        className="animate-fade-in motion-safe:animate-fadeIn max-w-none whitespace-pre-wrap"
+      >
+        {block}
+      </div>
+    </>
+  );
+};
+
+export const ParseToMarkdown = async ({ block }: { block: string }) => {
   const html = await marked(block);
 
   return (
     <>
       <div
-        data-message-id={messageId}
-        className="animate-fade-in motion-safe:animate-fadeIn"
+        className="animate-fade-in motion-safe:animate-fadeIn max-w-none"
         dangerouslySetInnerHTML={{ __html: html }}
       />
     </>

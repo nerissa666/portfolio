@@ -2,8 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-
-
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -15,4 +13,18 @@
 
 .animate-fade-in {
   animation: fadeIn 0.5s ease-in-out;
+}
+
+@layer components {
+  .prose pre {
+    @apply bg-slate-50 border border-slate-200;
+  }
+
+  .prose code {
+    @apply bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded;
+  }
+
+  .prose pre code {
+    @apply bg-transparent p-0 text-slate-700 rounded-none;
+  }
 }

@@ -85,3 +85,17 @@ export const createMarkdownBlockGeneratorFromLlmReader = (
 
   return generator();
 };
+
+export const createPassthroughBlockGeneratorFromLlmReader = (
+  reader: ReadableStreamDefaultReader<string>
+) => {
+  const generator = async function* () {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      yield value;
+    }
+  };
+
+  return generator();
+};
