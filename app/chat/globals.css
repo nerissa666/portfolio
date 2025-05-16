@@ -80,14 +80,17 @@
 @layer components {
   .prose {
     @apply max-w-none;
+    font-family: var(--font-geist-sans);
   }
 
   .prose pre {
     @apply bg-slate-50 border border-slate-200 rounded-lg;
+    font-family: var(--font-geist-mono);
   }
 
   .prose code {
-    @apply bg-slate-100 px-1.5 py-0.5 rounded text-slate-700;
+    @apply bg-slate-100 px-1.5 py-0.5 rounded text-slate-700 text-sm;
+    font-family: var(--font-geist-mono);
   }
 
   .prose pre code {
@@ -112,12 +115,12 @@
   }
 
   .prose p {
-    @apply text-slate-700 leading-7 mb-4;
+    @apply text-slate-700 leading-relaxed mb-4 text-[15px] font-normal;
   }
 
   .prose ul,
   .prose ol {
-    @apply text-slate-700 leading-7 mb-4;
+    @apply text-slate-700 leading-relaxed mb-4 text-[15px];
   }
 
   .prose li {
@@ -125,11 +128,11 @@
   }
 
   .prose blockquote {
-    @apply border-l-4 border-slate-200 pl-4 italic text-slate-600;
+    @apply border-l-4 border-slate-200 pl-4 italic text-slate-600 bg-slate-50/50 py-2 px-4 rounded-r-lg;
   }
 
   .prose a {
-    @apply text-blue-600 hover:text-blue-800 underline;
+    @apply text-blue-600 hover:text-blue-800 underline decoration-2 underline-offset-2 transition-colors;
   }
 
   .prose strong {
@@ -145,7 +148,7 @@
   }
 
   .prose table {
-    @apply w-full border-collapse mb-4;
+    @apply w-full border-collapse mb-4 rounded-lg overflow-hidden shadow-sm;
   }
 
   .prose th {

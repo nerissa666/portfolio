@@ -63,17 +63,19 @@ const AssistantMessageWrapperV2_Content = ({
   const key = isLoading ? "loading" : "loaded";
 
   return (
-    <div className="mb-8" key={key}>
-      <div className="text-sm font-medium text-blue-600 mb-2">Assistant</div>
-      <div className="prose prose-blue max-w-none">
-        <div className="prose max-w-none">
-          {children}
-          {isLoading && (
-            <div className="mt-4 flex items-center space-x-2 text-blue-600">
-              <div className="h-3 w-3 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
-              <span className="text-sm font-medium">Thinking...</span>
-            </div>
-          )}
+    <div className="mb-4 pb-2" key={key}>
+      <div className="bg-blue-50/50 rounded-lg p-3">
+        <div className="text-xs font-medium text-gray-500 mb-1.5">Response</div>
+        <div className="prose prose-gray max-w-none">
+          <div className="prose max-w-none">
+            {children}
+            {isLoading && (
+              <div className="mt-3 flex items-center space-x-2 text-gray-600">
+                <div className="h-2.5 w-2.5 border-2 border-gray-600 border-t-transparent rounded-full animate-spin" />
+                <span className="text-xs font-medium">Processing...</span>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

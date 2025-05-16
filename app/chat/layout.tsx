@@ -38,11 +38,6 @@ export default function RootLayout({
               name="viewport"
               content="width=device-width, initial-scale=1.0, viewport-fit=cover"
             />
-            <style>{`
-              html {
-                font-family: var(--font-geist-sans);
-              }
-            `}</style>
           </head>
           <body className="antialiased bg-grey-50">
             <TopNav />

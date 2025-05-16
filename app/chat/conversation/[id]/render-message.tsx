@@ -6,11 +6,13 @@ export const UserMessageWrapper = ({
   children: React.ReactNode;
 }) => {
   return (
-    <div className="mb-12 pb-8 border-b border-gray-100 last:border-b-0 last:mb-0 last:pb-0">
-      <div className="text-sm font-medium text-gray-500 mb-3">You</div>
-      <div className="prose prose-gray max-w-none">
-        <div className="whitespace-pre-line max-w-none text-gray-800">
-          {children}
+    <div className="mb-4 pb-2">
+      <div className="bg-gray-50 rounded-lg p-3">
+        <div className="text-xs font-medium text-gray-500 mb-1.5">User</div>
+        <div className="prose prose-gray max-w-none">
+          <div className="whitespace-pre-line max-w-none text-gray-800">
+            {children}
+          </div>
         </div>
       </div>
     </div>
