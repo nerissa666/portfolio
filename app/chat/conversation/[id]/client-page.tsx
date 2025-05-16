@@ -3,7 +3,6 @@ import { ReactNode, useState, useEffect, useRef } from "react";
 import { RenderFromPending } from "./render-from-pending";
 import { type getMessageReactNode as getMessageReactNodeType } from "./action";
 import { NewResponseProvider } from "./get-new-response-context";
-import { FontSizeControl } from "./font-size-control";
 
 export default function ClientPage({
   conversationId,
@@ -52,9 +51,8 @@ export default function ClientPage({
       }}
     >
       <div className="flex flex-col h-[calc(100vh-60px)]">
-        <FontSizeControl />
         <div className="flex-1 overflow-y-auto">
-          <div className="max-w-5xl min-w-5xl mx-auto px-4 py-8">
+          <div className="max-w-7xl mx-auto">
             {messages.length === 0 ||
             (Array.isArray(messages[0]) &&
               messages.length === 1 &&
@@ -69,17 +67,17 @@ export default function ClientPage({
               </div>
             ) : (
               <>
-                <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-8">
+                <div className="bg-white border-gray-100 p-2 sm:p-8">
                   <div className="prose prose-lg max-w-none">{messages}</div>
                 </div>
-                <div className="h-[50vh]" />
+                <div className="h-[40vh]" />
                 <div ref={bottomOfPageRef} />
               </>
             )}
           </div>
         </div>
 
-        <div className="w-full border-t border-gray-200 bg-white">
+        <div className="border-t border-gray-200 bg-white">
           <form
             ref={formRef}
             action={async () => {
@@ -93,15 +91,14 @@ export default function ClientPage({
               bottomOfPageRef.current?.scrollIntoView({ behavior: "smooth" });
             }}
           >
-            <div ref={inputRef} className="max-w-5xl min-w-5xl mx-auto p-4">
+            <div ref={inputRef} className="max-w-7xl mx-auto p-4">
               <div className="relative">
                 <textarea
                   ref={textareaRef}
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
-                  className="w-full px-4 py-3 pr-12 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none shadow-sm bg-gray-50"
-                  placeholder="Type a message... (Enter to send, Shift + Enter for new line)"
-                  rows={3}
+                  className="w-full px-4 py-3 pr-12 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none shadow-sm"
+                  rows={2}
                 />
                 <button
                   type="submit"

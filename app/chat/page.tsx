@@ -56,7 +56,7 @@ const NewChat = ({ userId }: { userId: string }) => {
         >
           <button
             type="submit"
-            className="w-full sm:w-auto flex items-center justify-center py-2 px-6 rounded-md text-sm font-medium text-white bg-[#4A154B] hover:bg-[#611f69] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#4A154B] transition-colors"
+            className="w-full sm:w-auto flex items-center justify-center py-2 px-6 rounded-md text-sm font-medium text-white bg-gray-900 hover:bg-[#611f69] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#4A154B] transition-colors"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"

@@ -4,6 +4,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Link from "next/link";
 import { Suspense } from "react";
+import { FontSizeControl } from "./conversation/[id]/font-size-control";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -41,7 +42,7 @@ export default function RootLayout({
           </head>
           <body className="antialiased bg-grey-50">
             <TopNav />
-            <div className="max-w-7xl mx-auto">{children}</div>
+            {children}
           </body>
         </html>
       </ClerkProvider>
@@ -73,10 +74,15 @@ const TopNav = () => {
           </svg>
           <span className="font-medium">Home</span>
         </Link>
-        <div className="flex items-center gap-4 text-white w-[28px] h-[28px]">
-          <SignedIn>
-            <UserButton />
-          </SignedIn>
+        <div className="flex items-center gap-4">
+          <div className="text-white">
+            <FontSizeControl />
+          </div>
+          <div className="w-[28px] h-[28px]">
+            <SignedIn>
+              <UserButton />
+            </SignedIn>
+          </div>
         </div>
       </div>
     </nav>
