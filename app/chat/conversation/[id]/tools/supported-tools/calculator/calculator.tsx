@@ -1,6 +1,5 @@
 import { z } from "zod";
-import { CompleteToolCallPayload } from "@/app/db/redis";
-import { ReactNode } from "react";
+import type { ExecuteFunction } from "../tools";
 
 const paramsSchema = z.object({
   a: z.number(),
@@ -15,40 +14,23 @@ export const specs = {
   parameters: paramsSchema,
 };
 
-export const execute = (
-  args: ParamsType,
-  completeToolCallServerAction: (
-    payload: CompleteToolCallPayload
-  ) => Promise<ReactNode>,
-  toolCallData: {
-    toolCallId: string;
-    toolCallGroupId: string;
-  }
-) => {
+export const execute: ExecuteFunction<ParamsType> = ({
+  args,
+  completeToolCallRsc,
+}) => {
   return (
     <div>
-      <CalculatorBase
-        args={args}
-        completeToolCallServerAction={completeToolCallServerAction}
-        toolCallData={toolCallData}
-      />
+      <CalculatorBase args={args} completeToolCallRsc={completeToolCallRsc} />
     </div>
   );
 };
 
 const CalculatorBase = async ({
   args,
-  completeToolCallServerAction,
-  toolCallData,
+  completeToolCallRsc,
 }: {
   args: ParamsType;
-  completeToolCallServerAction: (
-    payload: CompleteToolCallPayload
-  ) => Promise<ReactNode>;
-  toolCallData: {
-    toolCallId: string;
-    toolCallGroupId: string;
-  };
+  completeToolCallRsc: (result: unknown) => Promise<void>;
 }) => {
   const { a, b, operation } = args;
   let result: number;
@@ -76,10 +58,7 @@ const CalculatorBase = async ({
       operationSymbol = "+";
   }
 
-  const node = await completeToolCallServerAction({
-    ...toolCallData,
-    result: result,
-  });
+  const node = await completeToolCallRsc(result);
 
   return (
     <>

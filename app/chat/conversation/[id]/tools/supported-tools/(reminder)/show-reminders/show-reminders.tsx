@@ -1,8 +1,7 @@
 import { z } from "zod";
 import { listAllReminders } from "@/app/db/redis";
 import { ReminderList } from "./reminder-list";
-import { CompleteToolCallPayload } from "@/app/db/redis";
-import { ReactNode } from "react";
+import { ExecuteFunction } from "../../tools";
 
 const paramsSchema = z.object({});
 
@@ -14,22 +13,12 @@ export const specs = {
   parameters: paramsSchema,
 };
 
-export async function execute(
-  args: ParamsType,
-  completeToolCallServerAction: (
-    payload: CompleteToolCallPayload
-  ) => Promise<ReactNode>,
-  toolCallData: {
-    toolCallId: string;
-    toolCallGroupId: string;
-  }
-) {
+export const execute: ExecuteFunction<ParamsType> = async ({
+  completeToolCallRsc,
+}) => {
   try {
     const reminders = await listAllReminders();
-    const node = await completeToolCallServerAction({
-      ...toolCallData,
-      result: reminders,
-    });
+    const node = await completeToolCallRsc(reminders);
     return (
       <>
         {node}
@@ -39,11 +28,7 @@ export async function execute(
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "Failed to fetch reminders";
-    await completeToolCallServerAction({
-      toolCallGroupId: "",
-      toolCallId: "",
-      result: { error: errorMessage },
-    });
+    await completeToolCallRsc({ error: errorMessage });
     return <div className="text-red-500">{errorMessage}</div>;
   }
-}
+};

@@ -1,6 +1,6 @@
 import { openai } from "@ai-sdk/openai";
 import { CoreMessage, streamText } from "ai";
-import { TOOLS } from "./tools";
+import { TOOLS } from "./supported-tools/tools";
 import { getUserInformation, Message } from "@/app/db/redis";
 
 export const getLlmStream = async (messages: Message[]) => {

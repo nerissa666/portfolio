@@ -1,7 +1,6 @@
 import { addReminder } from "@/app/db/redis";
 import { z } from "zod";
-import { CompleteToolCallPayload } from "@/app/db/redis";
-import { ReactNode } from "react";
+import { ExecuteFunction } from "../../tools";
 
 const paramsSchema = z.object({
   content: z.string().describe("The content of the reminder"),
@@ -14,22 +13,13 @@ export const specs = {
   parameters: paramsSchema,
 };
 
-export async function execute(
-  args: ParamsType,
-  completeToolCallServerAction: (
-    payload: CompleteToolCallPayload
-  ) => Promise<ReactNode>,
-  toolCallData: {
-    toolCallId: string;
-    toolCallGroupId: string;
-  }
-) {
+export const execute: ExecuteFunction<ParamsType> = async ({
+  args,
+  completeToolCallRsc,
+}) => {
   try {
     const reminder = await addReminder(args.content);
-    const node = await completeToolCallServerAction({
-      ...toolCallData,
-      result: { addedRemindedr: reminder },
-    });
+    const node = await completeToolCallRsc({ addedRemindedr: reminder });
 
     return (
       <>
@@ -52,11 +42,7 @@ export async function execute(
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "Failed to create reminder";
-    await completeToolCallServerAction({
-      toolCallGroupId: "",
-      toolCallId: "",
-      result: { error: errorMessage },
-    });
+    await completeToolCallRsc({ error: errorMessage });
     return <div className="text-red-500">{errorMessage}</div>;
   }
-}
+};

@@ -1,8 +1,8 @@
 import { z } from "zod";
-import { CompleteToolCallPayload, listAllReminders } from "@/app/db/redis";
+import { listAllReminders } from "@/app/db/redis";
 import { fuzzySearch } from "./fuzzy-search";
 import { EditReminderDialog } from "./edit-reminder-dialog";
-import { ReactNode } from "react";
+import { ExecuteFunction } from "../../tools";
 
 const paramsSchema = z.object({
   searchQuery: z
@@ -26,16 +26,11 @@ export const specs = {
   parameters: paramsSchema,
 };
 
-export async function execute(
-  args: ParamsType,
-  completeToolCallServerAction: (
-    payload: CompleteToolCallPayload
-  ) => Promise<ReactNode>,
-  toolCallData: {
-    toolCallId: string;
-    toolCallGroupId: string;
-  }
-) {
+export const execute: ExecuteFunction<ParamsType> = async ({
+  args,
+  completeToolCallServerAction,
+  completeToolCallRsc,
+}) => {
   try {
     const reminders = await listAllReminders();
 
@@ -72,10 +67,7 @@ export async function execute(
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "Failed to find reminder";
-    await completeToolCallServerAction({
-      ...toolCallData,
-      result: { error: errorMessage },
-    });
+    await completeToolCallRsc({ error: errorMessage });
     return <div className="text-red-500">{errorMessage}</div>;
   }
-}
+};

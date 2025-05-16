@@ -17,7 +17,7 @@ import {
   UserMessageWrapper,
 } from "./render-message";
 import { Spinner } from "./spinner";
-import Collapsable from "./tools/collapsable.client";
+import Collapsable from "../../../components/collapsable.client";
 import { getLlmStream } from "./tools/llm";
 import {
   ToolCallGroup,
