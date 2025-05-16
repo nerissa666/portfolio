@@ -249,5 +249,5 @@ For questions or issues:
 ## Important Notes
 1. Ensure that your `execute` function calls `completeToolCallRsc` to store the results to a DB. You must create new DB stuff in [redis.ts](mdc:app/db/redis.ts) file.
 2. When creating a new tool, think about how it interacts with AI chatbot interface. Make an interaction example at the top of the tool as a comment.
-
+3. Ensure you use light mode.
 

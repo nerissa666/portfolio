@@ -4,6 +4,7 @@ import * as addReminder from "./(reminder)/add-reminder/add-reminder";
 import * as showReminders from "./(reminder)/show-reminders/show-reminders";
 import * as editReminder from "./(reminder)/edit-reminder/edit-reminder";
 import * as webSearch from "./web-search/web-search";
+import * as pronunciation from "./pronunciation/pronunciation";
 import type { CompleteToolCallPayload } from "@/app/db/redis";
 import type { ReactNode } from "react";
 
@@ -16,6 +17,7 @@ export const TOOLS = {
   showReminders: showReminders.specs,
   editReminder: editReminder.specs,
   webSearch: webSearch.specs,
+  pronunciation: pronunciation.specs,
 } as const;
 
 // Execute function can return a React node, and it will be displayed
@@ -28,6 +30,7 @@ export const EXECUTE_TOOLS: Record<keyof typeof TOOLS, ExecuteFunction<any>> = {
   showReminders: showReminders.execute,
   addReminder: addReminder.execute,
   editReminder: editReminder.execute,
+  pronunciation: pronunciation.execute,
 } as const;
 
 export type ExecuteFunction<ParamsType> = (props: {
