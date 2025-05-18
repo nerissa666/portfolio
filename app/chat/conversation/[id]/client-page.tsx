@@ -54,7 +54,7 @@ export default function ClientPage({
       <FullHeightContainer offset={60}>
         <div className="flex flex-col h-full">
           <div className="flex-1 overflow-y-auto">
-            <div className="max-w-7xl mx-auto">
+            <div className="mx-auto w-full max-w-[min(100vw,80rem)]">
               {messages.length === 0 ||
               (Array.isArray(messages[0]) &&
                 messages.length === 1 &&
@@ -70,7 +70,9 @@ export default function ClientPage({
               ) : (
                 <>
                   <div className="bg-white border-gray-100 p-2 sm:p-8">
-                    <div className="prose prose-lg max-w-none">{messages}</div>
+                    <div className="prose prose-lg max-w-none overflow-x-auto">
+                      {messages}
+                    </div>
                   </div>
                   <div className="h-[40vh]" />
                   <div ref={bottomOfPageRef} />
@@ -93,7 +95,10 @@ export default function ClientPage({
                 bottomOfPageRef.current?.scrollIntoView({ behavior: "smooth" });
               }}
             >
-              <div ref={inputRef} className="max-w-7xl mx-auto p-4">
+              <div
+                ref={inputRef}
+                className="mx-auto w-full max-w-[min(100vw,80rem)] p-4"
+              >
                 <div className="relative">
                   <textarea
                     ref={textareaRef}
