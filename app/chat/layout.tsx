@@ -40,7 +40,7 @@ export default function RootLayout({
               content="width=device-width, initial-scale=1.0, viewport-fit=cover"
             />
           </head>
-          <body className="antialiased bg-grey-50">
+          <body className="antialiased bg-grey-50 overflow-hidden">
             <TopNav />
             {children}
           </body>
