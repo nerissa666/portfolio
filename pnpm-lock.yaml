@@ -4,6 +4,11 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+patchedDependencies:
+  katex@0.16.21:
+    hash: bj5rt4h5tv7pw2r7zg25t6qaxa
+    path: patches/katex@0.16.21.patch
+
 importers:
 
   .:
@@ -61,7 +66,7 @@ importers:
         version: 5.6.1
       katex:
         specifier: ^0.16.21
-        version: 0.16.21
+        version: 0.16.21(patch_hash=bj5rt4h5tv7pw2r7zg25t6qaxa)
       lodash:
         specifier: ^4.17.21
         version: 4.17.21
@@ -73,7 +78,7 @@ importers:
         version: 15.0.6
       marked-katex-extension:
         specifier: ^5.1.4
-        version: 5.1.4(katex@0.16.21)(marked@15.0.6)
+        version: 5.1.4(katex@0.16.21(patch_hash=bj5rt4h5tv7pw2r7zg25t6qaxa))(marked@15.0.6)
       next:
         specifier: 15.4.0-canary.26
         version: 15.4.0-canary.26(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@19.0.0-beta-714736e-20250131)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
@@ -4773,7 +4778,7 @@ snapshots:
       object.assign: 4.1.7
       object.values: 1.2.1
 
-  katex@0.16.21:
+  katex@0.16.21(patch_hash=bj5rt4h5tv7pw2r7zg25t6qaxa):
     dependencies:
       commander: 8.3.0
 
@@ -4838,9 +4843,9 @@ snapshots:
 
   markdown-table@3.0.4: {}
 
-  marked-katex-extension@5.1.4(katex@0.16.21)(marked@15.0.6):
+  marked-katex-extension@5.1.4(katex@0.16.21(patch_hash=bj5rt4h5tv7pw2r7zg25t6qaxa))(marked@15.0.6):
     dependencies:
-      katex: 0.16.21
+      katex: 0.16.21(patch_hash=bj5rt4h5tv7pw2r7zg25t6qaxa)
       marked: 15.0.6
 
   marked@15.0.6: {}
@@ -5095,7 +5100,7 @@ snapshots:
     dependencies:
       '@types/katex': 0.16.7
       devlop: 1.1.0
-      katex: 0.16.21
+      katex: 0.16.21(patch_hash=bj5rt4h5tv7pw2r7zg25t6qaxa)
       micromark-factory-space: 2.0.1
       micromark-util-character: 2.1.1
       micromark-util-symbol: 2.0.1
@@ -5514,7 +5519,7 @@ snapshots:
 
   react-katex@3.0.1(prop-types@15.8.1)(react@19.0.0):
     dependencies:
-      katex: 0.16.21
+      katex: 0.16.21(patch_hash=bj5rt4h5tv7pw2r7zg25t6qaxa)
       prop-types: 15.8.1
       react: 19.0.0
 
@@ -5595,7 +5600,7 @@ snapshots:
       '@types/katex': 0.16.7
       hast-util-from-html-isomorphic: 2.0.0
       hast-util-to-text: 4.0.2
-      katex: 0.16.21
+      katex: 0.16.21(patch_hash=bj5rt4h5tv7pw2r7zg25t6qaxa)
       unist-util-visit-parents: 6.0.1
       vfile: 6.0.3
 

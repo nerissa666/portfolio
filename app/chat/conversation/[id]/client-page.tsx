@@ -54,7 +54,7 @@ export default function ClientPage({
       <FullHeightContainer offset={60}>
         <div className="flex flex-col h-full">
           <div className="flex-1 overflow-y-auto">
-            <div className="mx-auto w-full max-w-[min(100vw,80rem)]">
+            <div className="mx-auto w-full max-w-[min(100vw,50rem)]">
               {messages.length === 0 ||
               (Array.isArray(messages[0]) &&
                 messages.length === 1 &&

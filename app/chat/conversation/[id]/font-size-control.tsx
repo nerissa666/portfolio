@@ -7,7 +7,7 @@ import { Minus, Plus } from "lucide-react";
 const MIN_FONT_SIZE = 12;
 const MAX_FONT_SIZE = 42;
 const FONT_SIZE_STEP = 2;
-const DEFAULT_FONT_SIZE = 14;
+const DEFAULT_FONT_SIZE = 16;
 
 export function FontSizeControl() {
   const [fontSize, setFontSize] = useState(DEFAULT_FONT_SIZE);
