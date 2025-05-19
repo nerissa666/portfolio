@@ -590,3 +590,54 @@ export async function deleteToolCallGroupsByConversation(
     await multi.exec();
   }
 }
+
+export interface Notes {
+  id: string;
+  markdown: string;
+  createdAt: number;
+}
+
+/**
+ * Creates a new notes entry
+ * @param markdown The markdown content of the notes
+ * @returns The created notes object
+ */
+export async function createNotes(markdown: string): Promise<Notes> {
+  const id = uuid();
+  const notes: Notes = {
+    id,
+    markdown,
+    createdAt: Date.now(),
+  };
+
+  // Store the notes
+  await redis.set(`notes:${id}`, JSON.stringify(notes));
+  // Add to the list of all notes
+  await redis.zadd("notes:all", notes.createdAt, id);
+
+  return notes;
+}
+
+/**
+ * Retrieves notes by ID
+ * @param id The ID of the notes to retrieve
+ * @returns The notes object if found, null otherwise
+ */
+export async function getNotesById(id: string): Promise<Notes | null> {
+  const notes = await redis.get(`notes:${id}`);
+  return notes ? JSON.parse(notes) : null;
+}
+
+/**
+ * Lists all notes in reverse chronological order
+ * @returns Array of notes objects
+ */
+export async function listAllNotes(): Promise<Notes[]> {
+  // Get all note IDs in reverse chronological order (newest first)
+  const ids = await redis.zrevrange("notes:all", 0, -1);
+  if (!ids.length) return [];
+
+  const notes = await Promise.all(ids.map((id) => redis.get(`notes:${id}`)));
+
+  return notes.filter(Boolean).map((str) => JSON.parse(str!));
+}

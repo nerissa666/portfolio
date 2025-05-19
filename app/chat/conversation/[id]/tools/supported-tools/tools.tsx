@@ -6,6 +6,7 @@ import * as editReminder from "./(reminder)/edit-reminder/edit-reminder";
 import * as webSearch from "./web-search/web-search";
 import * as pronunciation from "./pronunciation/pronunciation";
 import * as imageGeneration from "./image-generation/image-generation";
+import * as messageSummary from "./message-summary/message-summary";
 import type { CompleteToolCallPayload } from "@/app/db/redis";
 import type { ReactNode } from "react";
 
@@ -20,6 +21,7 @@ export const TOOLS = {
   webSearch: webSearch.specs,
   pronunciation: pronunciation.specs,
   imageGeneration: imageGeneration.specs,
+  messageSummary: messageSummary.specs,
 } as const;
 
 // Execute function can return a React node, and it will be displayed
@@ -34,6 +36,7 @@ export const EXECUTE_TOOLS: Record<keyof typeof TOOLS, ExecuteFunction<any>> = {
   editReminder: editReminder.execute,
   pronunciation: pronunciation.execute,
   imageGeneration: imageGeneration.execute,
+  messageSummary: messageSummary.execute,
 } as const;
 
 export type ExecuteFunction<ParamsType> = (props: {
@@ -42,4 +45,5 @@ export type ExecuteFunction<ParamsType> = (props: {
     payload: CompleteToolCallPayload
   ) => Promise<ReactNode>;
   completeToolCallRsc: (result: unknown) => Promise<ReactNode>;
+  conversationId: string;
 }) => ReactNode;

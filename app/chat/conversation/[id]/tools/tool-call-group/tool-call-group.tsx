@@ -76,6 +76,7 @@ export const ToolCallGroup = async ({
             args,
             completeToolCallServerAction,
             completeToolCallRsc,
+            conversationId,
           });
         };
 
