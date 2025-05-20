@@ -44,7 +44,7 @@ export const execute: ExecuteFunction<ParamsType> = async ({
       .join("\n");
 
     const { object } = await generateObject({
-      model: openai("gpt-4o"),
+      model: openai("gpt-4.1"),
       messages: [
         {
           role: "system",

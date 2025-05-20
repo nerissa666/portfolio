@@ -7,7 +7,7 @@ export const getLlmStream = async (messages: Message[]) => {
   const userInformation = (await getUserInformation()).join(" ");
 
   return await streamText({
-    model: openai("gpt-4.1"),
+    model: openai("gpt-4o"),
     messages: [
       {
         role: "system",

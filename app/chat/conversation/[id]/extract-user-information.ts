@@ -19,7 +19,7 @@ export async function extractUserInformation(
   message: string
 ): Promise<UserInformation> {
   const { object } = await generateObject({
-    model: openai("gpt-4o"),
+    model: openai("gpt-4o-mini"),
     schema: UserInformationSchema,
     messages: [
       {
