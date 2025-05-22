@@ -1,43 +1,14 @@
-import Link from "next/link";
 import { MarkdownParser } from "@/app/chat/conversation/[id]/markdown-parser";
-import { getStoryContentEffective } from "./getStoryContentEffective";
-import { translateTextToChinese } from "../translateToChinese";
-import { translatePageToChinese } from "../translateToChinese";
-import { getTranslatedStory, storeTranslatedStory } from "@/app/db/redis";
+import Link from "next/link";
+import { getAndCacheTranslatedStory } from "../lib/getAndCacheTranslatedStory";
 
-const RenderStory = async ({ storyId }: { storyId: string }) => {
-  // First try to get the cached translation
-  let story = await getTranslatedStory(storyId);
-
-  if (!story || !story.translatedContent) {
-    // If no cached version exists, fetch and translate
-    const storyRes = await fetch(
-      `https://hacker-news.firebaseio.com/v0/item/${storyId}.json`
-    );
-
-    if (!storyRes.ok) {
-      throw new Error("Failed to fetch story");
-    }
-
-    const originalStory = await storyRes.json();
-
-    // Get and translate the content
-    const [content, translatedTitle] = await Promise.all([
-      getStoryContentEffective(originalStory.url),
-      translateTextToChinese(originalStory.title),
-    ]);
-
-    const translatedContent = await translatePageToChinese(content);
-
-    // Store the translation in Redis
-    story = await storeTranslatedStory(
-      storyId,
-      originalStory.title,
-      translatedTitle,
-      translatedContent,
-      originalStory.url
-    );
-  }
+export default async function StoryPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  const story = await getAndCacheTranslatedStory(id);
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -100,13 +71,4 @@ const RenderStory = async ({ storyId }: { storyId: string }) => {
       </article>
     </div>
   );
-};
-
-export default async function StoryPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const { id } = await params;
-  return <RenderStory storyId={id} />;
 }

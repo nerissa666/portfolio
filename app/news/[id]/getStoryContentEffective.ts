@@ -3,8 +3,6 @@ import { JSDOM } from "jsdom";
 // crawl effective string content from url
 export async function getStoryContentEffective(url: string): Promise<string> {
   try {
-    console.log("Fetching story content from", url);
-
     const response = await fetch(url, {
       headers: {
         "User-Agent":
