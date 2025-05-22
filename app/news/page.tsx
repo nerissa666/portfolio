@@ -14,9 +14,14 @@ async function getTopStories() {
 
   const storyIds = await res.json();
   const stories = await Promise.all(
-    storyIds.slice(0, 10).map(async (id: number) => {
+    storyIds.slice(0, 50).map(async (id: number) => {
       const storyRes = await fetch(
-        `https://hacker-news.firebaseio.com/v0/item/${id}.json`
+        `https://hacker-news.firebaseio.com/v0/item/${id}.json`,
+        {
+          next: {
+            revalidate: 3600 * 24,
+          },
+        }
       );
       return storyRes.json();
     })
