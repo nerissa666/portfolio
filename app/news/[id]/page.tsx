@@ -1,6 +1,7 @@
 import { MarkdownParser } from "@/app/chat/conversation/[id]/markdown-parser";
 import Link from "next/link";
 import { getAndCacheTranslatedStory } from "../lib/getAndCacheTranslatedStory";
+import { cacheLife } from "next/dist/server/use-cache/cache-life";
 
 export default async function StoryPage({
   params,
@@ -8,6 +9,15 @@ export default async function StoryPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  return <RenderStory id={id} />;
+}
+
+const RenderStory = async ({ id }: { id: string }) => {
+  "use cache";
+  cacheLife({
+    revalidate: 86400 * 30,
+  });
+
   const story = await getAndCacheTranslatedStory(id);
 
   return (
@@ -73,4 +83,4 @@ export default async function StoryPage({
       </article>
     </div>
   );
-}
+};
