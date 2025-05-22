@@ -15,6 +15,8 @@ export default async function StoryPage({
       <Link
         href="/news"
         className="inline-flex items-center text-gray-600 hover:text-gray-900 mb-8 text-sm font-medium"
+        // @ts-expect-error - unstable_dynamicOnHover is not part of the public types
+        unstable_dynamicOnHover={true}
       >
         <svg
           className="w-4 h-4 mr-2"
