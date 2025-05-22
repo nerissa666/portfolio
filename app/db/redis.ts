@@ -641,3 +641,73 @@ export async function listAllNotes(): Promise<Notes[]> {
 
   return notes.filter(Boolean).map((str) => JSON.parse(str!));
 }
+
+interface TranslatedStory {
+  id: string;
+  title: string;
+  translatedTitle: string;
+  translatedContent: string;
+  url: string;
+  createdAt: number;
+}
+
+/**
+ * Stores a translated story in Redis
+ * @param storyId The original story ID
+ * @param title The original story title
+ * @param translatedTitle The translated title
+ * @param translatedContent The translated content
+ * @param url The original story URL
+ * @returns The stored translated story object
+ */
+export async function storeTranslatedStory(
+  storyId: string,
+  title: string,
+  translatedTitle: string,
+  translatedContent: string,
+  url: string
+): Promise<TranslatedStory> {
+  const story: TranslatedStory = {
+    id: storyId,
+    title,
+    translatedTitle,
+    translatedContent,
+    url,
+    createdAt: Date.now(),
+  };
+
+  // Store the translated story
+  await redis.set(`story:translated:${storyId}`, JSON.stringify(story));
+  // Add to the list of all translated stories
+  await redis.zadd("stories:translated:all", story.createdAt, storyId);
+
+  return story;
+}
+
+/**
+ * Retrieves a translated story by ID
+ * @param storyId The ID of the story to retrieve
+ * @returns The translated story object if found, null otherwise
+ */
+export async function getTranslatedStory(
+  storyId: string
+): Promise<TranslatedStory | null> {
+  const story = await redis.get(`story:translated:${storyId}`);
+  return story ? JSON.parse(story) : null;
+}
+
+/**
+ * Lists all translated stories in reverse chronological order
+ * @returns Array of translated story objects
+ */
+export async function listAllTranslatedStories(): Promise<TranslatedStory[]> {
+  // Get all story IDs in reverse chronological order (newest first)
+  const ids = await redis.zrevrange("stories:translated:all", 0, -1);
+  if (!ids.length) return [];
+
+  const stories = await Promise.all(
+    ids.map((id) => redis.get(`story:translated:${id}`))
+  );
+
+  return stories.filter(Boolean).map((str) => JSON.parse(str!));
+}

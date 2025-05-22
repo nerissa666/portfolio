@@ -33,12 +33,6 @@ export const MarkdownParser = ({
     .use(rehypeStringify)
     .processSync(preprocessedContent);
 
-  console.log({
-    before: content,
-    preprocessed: preprocessedContent,
-    after: result,
-  });
-
   return (
     <div
       className={`prose prose-slate max-w-none ${className}`}

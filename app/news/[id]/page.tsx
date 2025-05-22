@@ -1,0 +1,112 @@
+import Link from "next/link";
+import { MarkdownParser } from "@/app/chat/conversation/[id]/markdown-parser";
+import { getStoryContentEffective } from "./getStoryContentEffective";
+import { translateTextToChinese } from "../translateToChinese";
+import { translatePageToChinese } from "../translateToChinese";
+import { getTranslatedStory, storeTranslatedStory } from "@/app/db/redis";
+
+const RenderStory = async ({ storyId }: { storyId: string }) => {
+  // First try to get the cached translation
+  let story = await getTranslatedStory(storyId);
+
+  if (!story || !story.translatedContent) {
+    // If no cached version exists, fetch and translate
+    const storyRes = await fetch(
+      `https://hacker-news.firebaseio.com/v0/item/${storyId}.json`
+    );
+
+    if (!storyRes.ok) {
+      throw new Error("Failed to fetch story");
+    }
+
+    const originalStory = await storyRes.json();
+
+    // Get and translate the content
+    const [content, translatedTitle] = await Promise.all([
+      getStoryContentEffective(originalStory.url),
+      translateTextToChinese(originalStory.title),
+    ]);
+
+    const translatedContent = await translatePageToChinese(content);
+
+    // Store the translation in Redis
+    story = await storeTranslatedStory(
+      storyId,
+      originalStory.title,
+      translatedTitle,
+      translatedContent,
+      originalStory.url
+    );
+  }
+
+  return (
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <Link
+        href="/news"
+        className="inline-flex items-center text-gray-600 hover:text-gray-900 mb-8 text-sm font-medium"
+      >
+        <svg
+          className="w-4 h-4 mr-2"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M15 19l-7-7 7-7"
+          />
+        </svg>
+        Back to News
+      </Link>
+
+      <article className="bg-white shadow-lg rounded-lg overflow-hidden">
+        <div className="p-6 sm:p-8">
+          <header className="border-b border-gray-200 pb-6 mb-6">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-serif font-bold leading-tight mb-4 text-gray-900">
+              {story.translatedTitle}
+            </h1>
+          </header>
+
+          <div className="prose prose-lg max-w-none font-serif text-gray-700 leading-relaxed">
+            <MarkdownParser content={story.translatedContent} />
+          </div>
+
+          <div className="mt-8 pt-6 border-t border-gray-200">
+            <a
+              href={story.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
+            >
+              Read Original Article
+              <svg
+                className="w-4 h-4 ml-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                />
+              </svg>
+            </a>
+          </div>
+        </div>
+      </article>
+    </div>
+  );
+};
+
+export default async function StoryPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  return <RenderStory storyId={id} />;
+}
