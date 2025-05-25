@@ -2,6 +2,7 @@ import { MarkdownParser } from "@/app/chat/conversation/[id]/markdown-parser";
 import Link from "next/link";
 import { getAndCacheTranslatedStory } from "../lib/getAndCacheTranslatedStory";
 import { cacheLife } from "next/dist/server/use-cache/cache-life";
+import { NewsChatWrapper } from "./news-chat-wrapper";
 
 export default async function StoryPage({
   params,
@@ -81,6 +82,11 @@ const RenderStory = async ({ id }: { id: string }) => {
           </div>
         </div>
       </article>
+
+      <NewsChatWrapper
+        title={story.translatedTitle}
+        content={story.translatedContent}
+      />
     </div>
   );
 };
