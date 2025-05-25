@@ -15,8 +15,11 @@ export function Pending() {
   );
 }
 
-export class ErrorBoundary extends Component<{}, { error: Error | null }> {
-  constructor(props: {}) {
+export class ErrorBoundary extends Component<
+  { children: React.ReactNode },
+  { error: Error | null }
+> {
+  constructor(props: { children: React.ReactNode }) {
     super(props);
     this.state = { error: null };
   }
