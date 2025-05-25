@@ -711,3 +711,39 @@ export async function listAllTranslatedStories(): Promise<TranslatedStory[]> {
 
   return stories.filter(Boolean).map((str) => JSON.parse(str!));
 }
+
+/**
+ * Removes all translated stories and their associated indices from Redis
+ * @returns Promise that resolves when cleanup is complete
+ */
+export async function cleanAllTranslations(): Promise<void> {
+  // Get all story IDs from the sorted set
+  const ids = await redis.zrange("stories:translated:all", 0, -1);
+
+  // Delete individual story records in batches to avoid command length limits
+  const BATCH_SIZE = 100;
+  for (let i = 0; i < ids.length; i += BATCH_SIZE) {
+    const batch = ids.slice(i, i + BATCH_SIZE);
+    const deleteKeys = batch.map((id) => `story:translated:${id}`);
+    if (deleteKeys.length) {
+      await redis.del(...deleteKeys);
+    }
+  }
+
+  // Delete the sorted set containing all story IDs
+  await redis.del("stories:translated:all");
+
+  // Verify cleanup
+  const remainingIds = await redis.zrange("stories:translated:all", 0, -1);
+  const remainingKeys = await redis.keys("story:translated:*");
+
+  if (remainingIds.length > 0 || remainingKeys.length > 0) {
+    console.error("Failed to clean all translations");
+    console.error(
+      `Remaining IDs: ${remainingIds.length}, Remaining keys: ${remainingKeys.length}`
+    );
+    throw new Error("Failed to clean all translations");
+  }
+
+  console.log("Successfully cleaned all translations");
+}

@@ -3,45 +3,8 @@ import Link from "next/link";
 import { translateTextToChinese } from "./translateToChinese";
 import { getTranslatedStory, storeTranslatedStory } from "@/app/db/redis";
 
-import { unstable_cache } from "next/cache";
-import { getAndCacheTranslatedStory } from "./lib/getAndCacheTranslatedStory";
-import plimit from "p-limit";
 import { cacheLife } from "next/dist/server/use-cache/cache-life";
-
-const limit = plimit(3);
-
-const getTopStories = unstable_cache(
-  async () => {
-    const res = await fetch(
-      "https://hacker-news.firebaseio.com/v0/topstories.json"
-    );
-
-    if (!res.ok) {
-      throw new Error("Failed to fetch top stories");
-    }
-
-    const storyIds = await res.json();
-    const stories = await Promise.all(
-      storyIds.slice(0, 50).map(async (id: number) => {
-        const storyRes = await fetch(
-          `https://hacker-news.firebaseio.com/v0/item/${id}.json`
-        );
-        return storyRes.json();
-      })
-    );
-
-    // translate all stories and cache to Redis
-    await Promise.all(
-      stories.map((story) =>
-        limit(() => getAndCacheTranslatedStory(story.id.toString()))
-      )
-    );
-
-    return stories;
-  },
-  ["top-stories"],
-  { revalidate: 86400 } // 24 hours in seconds
-);
+import { getTopStories } from "./lib/getTopStories";
 
 export default async function NewsPage() {
   "use cache";
