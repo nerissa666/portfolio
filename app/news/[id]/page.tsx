@@ -14,7 +14,7 @@ export default async function StoryPage({
 }
 
 const RenderStory = async ({ id }: { id: string }) => {
-  "use cache";
+  "use cache: remote";
   cacheLife({
     revalidate: 86400 * 30,
   });

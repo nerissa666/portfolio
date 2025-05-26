@@ -7,10 +7,8 @@ import { cacheLife } from "next/dist/server/use-cache/cache-life";
 import { getTopStories } from "./lib/getTopStories";
 
 export default async function NewsPage() {
-  "use cache";
-  cacheLife({
-    revalidate: 86400,
-  });
+  "use cache: remote";
+  cacheLife("max");
 
   const stories = await getTopStories();
   const translatedStories = await Promise.all(
