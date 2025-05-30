@@ -3,7 +3,7 @@ import { generateText } from "ai";
 
 export async function translateTextToChinese(text: string) {
   const { text: translatedText } = await generateText({
-    model: openai("gpt-4o"),
+    model: openai("gpt-4o-mini"),
     messages: [
       {
         role: "system",
@@ -21,7 +21,7 @@ export async function translateTextToChinese(text: string) {
 
 export async function translatePageToChinese(text: string) {
   const { text: translatedText } = await generateText({
-    model: openai("gpt-4o"),
+    model: openai("gpt-4o-mini"),
     messages: [
       {
         role: "system",
