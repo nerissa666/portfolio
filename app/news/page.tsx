@@ -1,38 +1,19 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { translateTextToChinese } from "./translateToChinese";
-import { getTranslatedStory, storeTranslatedStory } from "@/app/db/redis";
 
+import { listAllTranslatedStories } from "@/app/db/redis";
+import { cacheTag } from "next/dist/server/use-cache/cache-tag";
 import { cacheLife } from "next/dist/server/use-cache/cache-life";
-import { getTopStories } from "./lib/getTopStories";
+
+// import { cacheLife } from "next/dist/server/use-cache/cache-life";
 
 export default async function NewsPage() {
   "use cache: remote";
+  cacheTag("news-home");
   cacheLife("max");
 
-  const stories = await getTopStories();
-  const translatedStories = await Promise.all(
-    stories.map(async (story) => {
-      // Try to get cached translation first
-      let translatedStory = await getTranslatedStory(story.id);
-
-      if (!translatedStory) {
-        // If no cached version exists, translate and store
-        const translatedTitle = await translateTextToChinese(story.title);
-        translatedStory = await storeTranslatedStory(
-          story.id,
-          story.title,
-          translatedTitle,
-          "", // We don't need the content for the list view
-          story.url
-        );
-      }
-
-      return {
-        ...story,
-        translatedTitle: translatedStory.translatedTitle,
-      };
-    })
+  const translatedStories = (await listAllTranslatedStories()).filter(
+    (story) => story.translatedTitle !== "-"
   );
 
   return (
