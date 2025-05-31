@@ -5,7 +5,6 @@ import {
   cleanAllTranslationsAction,
   getExistingStoryIds,
   revalidateAndGetTopStories,
-  translateSingleStory,
 } from "./actions";
 
 export default function AdminPage() {
@@ -115,12 +114,30 @@ const StoryAction = ({
 }) => {
   const [isTranslating, setIsTranslating] = useState(false);
   const [translatedJustNow, setTranslatedJustNow] = useState(false);
+
   const translate = async () => {
     setIsTranslating(true);
-    await translateSingleStory(story.id);
-    setIsTranslating(false);
-    setTranslatedJustNow(true);
+    try {
+      const response = await fetch("/api/news/translate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ storyId: story.id }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Translation failed");
+      }
+
+      setTranslatedJustNow(true);
+    } catch (error) {
+      console.error("Translation error:", error);
+    } finally {
+      setIsTranslating(false);
+    }
   };
+
   const translated = wasTranslated || translatedJustNow;
 
   useEffect(() => {

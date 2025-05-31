@@ -14,6 +14,7 @@ export const revalidateAndGetTopStories = async () => {
 };
 
 export const translateSingleStory = async (storyId: number) => {
+  revalidateTag("top-stories");
   revalidateTag("news-home");
   await getAndCacheTranslatedStory(storyId);
 };
