@@ -18,7 +18,7 @@ export async function translateTopStories() {
       console.log(`Processing story ${story.id}: ${story.title}`);
 
       // Try to get cached translation first
-      let translatedStory = await getTranslatedStory(story.id.toString());
+      let translatedStory = await getTranslatedStory(story.id);
 
       if (!translatedStory || !translatedStory.translatedTitle) {
         console.log(
@@ -35,7 +35,7 @@ export async function translateTopStories() {
           );
 
           translatedStory = await storeTranslatedStory(
-            story.id.toString(),
+            story.id,
             story.title,
             translatedTitle,
             translatedContent,
@@ -45,7 +45,7 @@ export async function translateTopStories() {
         } catch (error) {
           console.error(`Error translating story ${story.id}:`, error);
           translatedStory = await storeTranslatedStory(
-            story.id.toString(),
+            story.id,
             story.title,
             "N/A",
             "N/A",

@@ -7,13 +7,13 @@ import { NewsChatWrapper } from "./news-chat-wrapper";
 export default async function StoryPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ id: number }>;
 }) {
   const { id } = await params;
   return <RenderStory id={id} />;
 }
 
-const RenderStory = async ({ id }: { id: string }) => {
+const RenderStory = async ({ id }: { id: number }) => {
   "use cache: remote";
   cacheLife({
     revalidate: 86400 * 30,

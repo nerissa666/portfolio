@@ -1,6 +1,8 @@
 import { cacheLife } from "next/dist/server/use-cache/cache-life";
 import { cacheTag } from "next/dist/server/use-cache/cache-tag";
 
+const MAX_STORIES = 50;
+
 export const getTopStories = async () => {
   "use cache: remote";
   cacheLife("max");
@@ -16,7 +18,7 @@ export const getTopStories = async () => {
 
   const storyIds = await res.json();
   const stories = await Promise.all(
-    storyIds.slice(0, 50).map(async (id: number) => {
+    storyIds.slice(0, MAX_STORIES).map(async (id: number) => {
       const storyRes = await fetch(
         `https://hacker-news.firebaseio.com/v0/item/${id}.json`
       );
@@ -24,5 +26,10 @@ export const getTopStories = async () => {
     })
   );
 
-  return stories;
+  // TODO: use Zod to validate
+  return stories as {
+    id: number;
+    title: string;
+    url: string;
+  }[];
 };

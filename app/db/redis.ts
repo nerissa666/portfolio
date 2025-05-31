@@ -643,7 +643,7 @@ export async function listAllNotes(): Promise<Notes[]> {
 }
 
 interface TranslatedStory {
-  id: string;
+  id: number;
   title: string;
   translatedTitle: string;
   translatedContent: string;
@@ -661,7 +661,7 @@ interface TranslatedStory {
  * @returns The stored translated story object
  */
 export async function storeTranslatedStory(
-  storyId: string,
+  storyId: number,
   title: string,
   translatedTitle: string,
   translatedContent: string,
@@ -690,10 +690,20 @@ export async function storeTranslatedStory(
  * @returns The translated story object if found, null otherwise
  */
 export async function getTranslatedStory(
-  storyId: string
+  storyId: number
 ): Promise<TranslatedStory | null> {
   const story = await redis.get(`story:translated:${storyId}`);
   return story ? JSON.parse(story) : null;
+}
+
+/**
+ * Gets all translated story IDs in reverse chronological order
+ * @returns Array of story IDs
+ */
+export async function getTranslatedStoryIds(): Promise<number[]> {
+  // Get all story IDs from the sorted set in reverse chronological order
+  const ids = await redis.zrevrange("stories:translated:all", 0, -1);
+  return ids.map((id) => parseInt(id, 10));
 }
 
 /**

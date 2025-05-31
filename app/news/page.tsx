@@ -14,13 +14,13 @@ export default async function NewsPage() {
   const translatedStories = await Promise.all(
     stories.map(async (story) => {
       // Try to get cached translation first
-      let translatedStory = await getTranslatedStory(story.id.toString());
+      let translatedStory = await getTranslatedStory(story.id);
 
       if (!translatedStory) {
         // If no cached version exists, translate and store
         const translatedTitle = await translateTextToChinese(story.title);
         translatedStory = await storeTranslatedStory(
-          story.id.toString(),
+          story.id,
           story.title,
           translatedTitle,
           "", // We don't need the content for the list view

@@ -16,6 +16,8 @@ export async function getStoryContentEffective(url: string): Promise<string> {
       method: "GET",
     });
 
+    console.log("fetched story for url ", url);
+
     if (!response.ok) {
       console.error(
         `Failed to fetch story content from ${url}. Status: ${response.status} ${response.statusText}`
@@ -117,6 +119,8 @@ export async function getStoryContentEffective(url: string): Promise<string> {
       .join("\n");
 
     // console.log("Extracted story text:", storyText); // For debugging
+
+    console.log({ storyText });
 
     return storyText;
   } catch (error) {

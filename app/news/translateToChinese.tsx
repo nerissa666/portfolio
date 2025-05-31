@@ -20,6 +20,7 @@ export async function translateTextToChinese(text: string) {
 }
 
 export async function translatePageToChinese(text: string) {
+  console.log("start to translate for page size ", text.length);
   const { text: translatedText } = await generateText({
     model: openai("gpt-4o-mini"),
     messages: [
