@@ -92,7 +92,7 @@ export default function ConversationList({
         >
           <button
             type="submit"
-            className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 rounded-md transition-colors"
+            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 rounded-md transition-colors"
           >
             <RenderFromPending
               pendingNode={
@@ -113,7 +113,7 @@ export default function ConversationList({
                 </svg>
               }
             />
-            Delete All Conversations
+            Delete All
           </button>
         </form>
       )}

@@ -590,3 +590,170 @@ export async function deleteToolCallGroupsByConversation(
     await multi.exec();
   }
 }
+
+export interface Notes {
+  id: string;
+  markdown: string;
+  createdAt: number;
+}
+
+/**
+ * Creates a new notes entry
+ * @param markdown The markdown content of the notes
+ * @returns The created notes object
+ */
+export async function createNotes(markdown: string): Promise<Notes> {
+  const id = uuid();
+  const notes: Notes = {
+    id,
+    markdown,
+    createdAt: Date.now(),
+  };
+
+  // Store the notes
+  await redis.set(`notes:${id}`, JSON.stringify(notes));
+  // Add to the list of all notes
+  await redis.zadd("notes:all", notes.createdAt, id);
+
+  return notes;
+}
+
+/**
+ * Retrieves notes by ID
+ * @param id The ID of the notes to retrieve
+ * @returns The notes object if found, null otherwise
+ */
+export async function getNotesById(id: string): Promise<Notes | null> {
+  const notes = await redis.get(`notes:${id}`);
+  return notes ? JSON.parse(notes) : null;
+}
+
+/**
+ * Lists all notes in reverse chronological order
+ * @returns Array of notes objects
+ */
+export async function listAllNotes(): Promise<Notes[]> {
+  // Get all note IDs in reverse chronological order (newest first)
+  const ids = await redis.zrevrange("notes:all", 0, -1);
+  if (!ids.length) return [];
+
+  const notes = await Promise.all(ids.map((id) => redis.get(`notes:${id}`)));
+
+  return notes.filter(Boolean).map((str) => JSON.parse(str!));
+}
+
+interface TranslatedStory {
+  id: number;
+  title: string;
+  translatedTitle: string;
+  translatedContent: string;
+  url: string;
+  createdAt: number;
+}
+
+/**
+ * Stores a translated story in Redis
+ * @param storyId The original story ID
+ * @param title The original story title
+ * @param translatedTitle The translated title
+ * @param translatedContent The translated content
+ * @param url The original story URL
+ * @returns The stored translated story object
+ */
+export async function storeTranslatedStory(
+  storyId: number,
+  title: string,
+  translatedTitle: string,
+  translatedContent: string,
+  url: string
+): Promise<TranslatedStory> {
+  const story: TranslatedStory = {
+    id: storyId,
+    title,
+    translatedTitle,
+    translatedContent,
+    url,
+    createdAt: Date.now(),
+  };
+
+  // Store the translated story
+  await redis.set(`story:translated:${storyId}`, JSON.stringify(story));
+  // Add to the list of all translated stories
+  await redis.zadd("stories:translated:all", story.createdAt, storyId);
+
+  return story;
+}
+
+/**
+ * Retrieves a translated story by ID
+ * @param storyId The ID of the story to retrieve
+ * @returns The translated story object if found, null otherwise
+ */
+export async function getTranslatedStory(
+  storyId: number
+): Promise<TranslatedStory | null> {
+  const story = await redis.get(`story:translated:${storyId}`);
+  return story ? JSON.parse(story) : null;
+}
+
+/**
+ * Gets all translated story IDs in reverse chronological order
+ * @returns Array of story IDs
+ */
+export async function getTranslatedStoryIds(): Promise<number[]> {
+  // Get all story IDs from the sorted set in reverse chronological order
+  const ids = await redis.zrevrange("stories:translated:all", 0, -1);
+  return ids.map((id) => parseInt(id, 10));
+}
+
+/**
+ * Lists all translated stories in reverse chronological order
+ * @returns Array of translated story objects
+ */
+export async function listAllTranslatedStories(): Promise<TranslatedStory[]> {
+  // Get all story IDs in reverse chronological order (newest first)
+  const ids = await redis.zrevrange("stories:translated:all", 0, -1);
+  if (!ids.length) return [];
+
+  const stories = await Promise.all(
+    ids.map((id) => redis.get(`story:translated:${id}`))
+  );
+
+  return stories.filter(Boolean).map((str) => JSON.parse(str!));
+}
+
+/**
+ * Removes all translated stories and their associated indices from Redis
+ * @returns Promise that resolves when cleanup is complete
+ */
+export async function cleanAllTranslations(): Promise<void> {
+  // Get all story IDs from the sorted set
+  const ids = await redis.zrange("stories:translated:all", 0, -1);
+
+  // Delete individual story records in batches to avoid command length limits
+  const BATCH_SIZE = 100;
+  for (let i = 0; i < ids.length; i += BATCH_SIZE) {
+    const batch = ids.slice(i, i + BATCH_SIZE);
+    const deleteKeys = batch.map((id) => `story:translated:${id}`);
+    if (deleteKeys.length) {
+      await redis.del(...deleteKeys);
+    }
+  }
+
+  // Delete the sorted set containing all story IDs
+  await redis.del("stories:translated:all");
+
+  // Verify cleanup
+  const remainingIds = await redis.zrange("stories:translated:all", 0, -1);
+  const remainingKeys = await redis.keys("story:translated:*");
+
+  if (remainingIds.length > 0 || remainingKeys.length > 0) {
+    console.error("Failed to clean all translations");
+    console.error(
+      `Remaining IDs: ${remainingIds.length}, Remaining keys: ${remainingKeys.length}`
+    );
+    throw new Error("Failed to clean all translations");
+  }
+
+  console.log("Successfully cleaned all translations");
+}

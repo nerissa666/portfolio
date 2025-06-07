@@ -1,6 +1,5 @@
 import { z } from "zod";
-import { CompleteToolCallPayload } from "@/app/db/redis";
-import { ReactNode } from "react";
+import { ExecuteFunction } from "../tools";
 
 const paramsSchema = z.object({
   location: z
@@ -95,27 +94,13 @@ function getWeatherDescription(code: number): string {
   return "Unknown";
 }
 
-export async function execute(
-  args: ParamsType,
-  completeToolCallServerAction: (
-    payload: CompleteToolCallPayload
-  ) => Promise<ReactNode>,
-  {
-    toolCallId,
-    toolCallGroupId,
-  }: {
-    toolCallId: string;
-    toolCallGroupId: string;
-  }
-) {
+export const execute: ExecuteFunction<ParamsType> = async ({
+  args,
+  completeToolCallRsc,
+}) => {
   try {
     const weatherData = await getWeatherData(args.location, args.units);
-    const node = await completeToolCallServerAction({
-      toolCallGroupId,
-      toolCallId,
-      result: weatherData,
-    });
-
+    const node = await completeToolCallRsc(weatherData);
     return (
       <>
         {node}
@@ -153,11 +138,7 @@ export async function execute(
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "Failed to fetch weather data";
-    await completeToolCallServerAction({
-      toolCallGroupId: "",
-      toolCallId: "",
-      result: { error: errorMessage },
-    });
+    await completeToolCallRsc({ error: errorMessage });
     return <div className="text-red-500">{errorMessage}</div>;
   }
-}
+};

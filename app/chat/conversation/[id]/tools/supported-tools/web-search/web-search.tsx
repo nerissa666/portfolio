@@ -1,9 +1,8 @@
 import { z } from "zod";
-import Exa, { SearchResult as ExaSearchResult } from "exa-js";
-import Collapsable from "./collapsable.client";
+import Exa, { type SearchResult as ExaSearchResult } from "exa-js";
 import { Suspense } from "react";
-import { CompleteToolCallPayload } from "@/app/db/redis";
-import { ReactNode } from "react";
+import Collapsable from "@/app/components/collapsable.client";
+import { ExecuteFunction } from "../tools";
 
 // Initialize Exa client
 const exa = new Exa(process.env.EXA_AI_API_KEY);
@@ -30,16 +29,10 @@ export const specs = {
   parameters: paramsSchema,
 };
 
-export async function execute(
-  args: ParamsType,
-  completeToolCallServerAction: (
-    payload: CompleteToolCallPayload
-  ) => Promise<ReactNode>,
-  toolCallData: {
-    toolCallId: string;
-    toolCallGroupId: string;
-  }
-) {
+export const execute: ExecuteFunction<ParamsType> = async ({
+  args,
+  completeToolCallRsc,
+}) => {
   try {
     const Component = async () => {
       const { results } = await exa.searchAndContents(args.query, {
@@ -59,10 +52,7 @@ export async function execute(
       );
 
       // Save the results
-      const node = await completeToolCallServerAction({
-        ...toolCallData,
-        result: searchResults,
-      });
+      const node = await completeToolCallRsc(searchResults);
 
       // Return a formatted display of the results
       return (
@@ -117,11 +107,7 @@ export async function execute(
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "Failed to perform web search";
-    await completeToolCallServerAction({
-      toolCallGroupId: "",
-      toolCallId: "",
-      result: { error: errorMessage },
-    });
+    await completeToolCallRsc({ error: errorMessage });
     return <div className="text-red-500">{errorMessage}</div>;
   }
-}
+};

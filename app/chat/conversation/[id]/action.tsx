@@ -11,13 +11,9 @@ import { AssistantMessageWrapperV2 } from "./assistant-message-wrapper-v2";
 import { DeleteAllNodesWithMessageId } from "./delete-all-nodes-with-message-id";
 import { extractUserInformation } from "./extract-user-information";
 import { createMarkdownBlockGeneratorFromLlmReader } from "./parser";
-import {
-  AssistantMessageWrapper,
-  ParseToMarkdown,
-  UserMessageWrapper,
-} from "./render-message";
+import { ParseToMarkdown, UserMessageWrapper } from "./render-message";
 import { Spinner } from "./spinner";
-import Collapsable from "./tools/collapsable.client";
+import Collapsable from "../../../components/collapsable.client";
 import { getLlmStream } from "./tools/llm";
 import {
   ToolCallGroup,
@@ -201,7 +197,7 @@ export const getMessageReactNode = async (
           >
             <StreamableParse
               accumulator={
-                accumulator.length === 0 ? block : accumulator + "\n" + block
+                accumulator.length === 0 ? block : accumulator + "\n\n" + block
               }
             />
           </Suspense>
@@ -378,7 +374,7 @@ export const getInitialMessagesReactNode = async (
           const Wrapper =
             message.role === "user"
               ? UserMessageWrapper
-              : AssistantMessageWrapper;
+              : AssistantMessageWrapperV2;
 
           return (
             <Wrapper key={index}>

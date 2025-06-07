@@ -1,6 +1,6 @@
 import { getOrCreateToolCallGroup } from "@/app/db/redis";
 import { getLlmStream } from "../llm";
-import { EXECUTE_TOOLS } from "../tools";
+import { EXECUTE_TOOLS } from "../supported-tools/tools";
 import { Suspense } from "react";
 import { Spinner } from "../../spinner";
 import { ToolCallWrapper } from "../../render-message";
@@ -63,15 +63,21 @@ export const ToolCallGroup = async ({
           if (index > 0) {
             await new Promise((resolve) => setTimeout(resolve, index * 1000));
           }
-          return await EXECUTE_TOOLS[toolName as keyof typeof EXECUTE_TOOLS](
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            args as any,
-            completeToolCallServerAction,
-            {
+
+          const completeToolCallRsc = async (result: unknown) => {
+            return await completeToolCallServerAction({
               toolCallId: toolCallResult.toolCallId,
               toolCallGroupId: toolCallGroup.toolCalls[0].toolCallId,
-            }
-          );
+              result,
+            });
+          };
+
+          return await EXECUTE_TOOLS[toolName as keyof typeof EXECUTE_TOOLS]({
+            args,
+            completeToolCallServerAction,
+            completeToolCallRsc,
+            conversationId,
+          });
         };
 
         return (

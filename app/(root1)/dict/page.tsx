@@ -120,7 +120,7 @@ const SearchContent = async ({
 };
 
 const RenderSearch = async ({ query }: { query: string }) => {
-  "use cache";
+  "use cache: remote";
   cacheLife("max");
 
   const reader = await (
@@ -215,7 +215,7 @@ const RenderStream = async ({
 };
 
 const MaybeGenerateImage = async ({ query }: { query: string }) => {
-  "use cache";
+  "use cache: remote";
   cacheLife("max");
 
   const { object } = await generateObject({

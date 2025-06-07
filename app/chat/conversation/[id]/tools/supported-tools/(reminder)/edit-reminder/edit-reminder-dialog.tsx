@@ -1,9 +1,12 @@
 "use client";
 
-import { ReactNode, useEffect, useState } from "react";
-import { CompleteToolCallPayload, Reminder } from "@/app/db/redis";
-import { deleteReminderAction, updateReminderAction } from "./reminder.action";
-import { useSaveToolCallResult } from "./tool-call-group/tool-call-context";
+import { type ReactNode, useEffect, useState } from "react";
+import type { CompleteToolCallPayload, Reminder } from "@/app/db/redis";
+import {
+  deleteReminderAction,
+  updateReminderAction,
+} from "../show-reminders/reminder.action";
+import { useSaveToolCallResult } from "../../../tool-call-group/tool-call-context";
 
 interface SearchResult {
   item: Reminder;

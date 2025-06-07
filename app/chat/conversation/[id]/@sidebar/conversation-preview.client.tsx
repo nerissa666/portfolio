@@ -15,7 +15,7 @@ export default function ConversationPreviewClient({
   return (
     <div
       className={`p-3 rounded-md transition-colors ${
-        isActive ? "bg-[#4A154B] text-white" : "hover:bg-gray-100 text-gray-700"
+        isActive ? "bg-gray-900 text-white" : "hover:bg-gray-100 text-gray-700"
       }`}
     >
       <p className="text-sm truncate">{preview}</p>

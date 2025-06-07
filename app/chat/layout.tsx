@@ -4,6 +4,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Link from "next/link";
 import { Suspense } from "react";
+import { FontSizeControl } from "./conversation/[id]/font-size-control";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -22,9 +23,9 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <Suspense>
       <ClerkProvider afterSignOutUrl="/chat">
@@ -38,15 +39,10 @@ export default function RootLayout({
               name="viewport"
               content="width=device-width, initial-scale=1.0, viewport-fit=cover"
             />
-            <style>{`
-              html {
-                font-family: var(--font-geist-sans);
-              }
-            `}</style>
           </head>
           <body className="antialiased bg-grey-50">
             <TopNav />
-            <div className="max-w-5xl mx-auto">{children}</div>
+            {children}
           </body>
         </html>
       </ClerkProvider>
@@ -57,7 +53,7 @@ export default function RootLayout({
 const TopNav = () => {
   return (
     <nav className="sticky top-0 border-b bg-gray-900 z-10 h-[60px]">
-      <div className="max-w-5xl mx-auto px-4 py-4 flex justify-between items-center">
+      <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
         <Link
           href="/chat"
           className="flex items-center gap-2 text-white hover:text-gray-300"
@@ -78,10 +74,15 @@ const TopNav = () => {
           </svg>
           <span className="font-medium">Home</span>
         </Link>
-        <div className="flex items-center gap-4 text-white w-[28px] h-[28px]">
-          <SignedIn>
-            <UserButton />
-          </SignedIn>
+        <div className="flex items-center gap-4">
+          <div className="text-white">
+            <FontSizeControl />
+          </div>
+          <div className="w-[28px] h-[28px]">
+            <SignedIn>
+              <UserButton />
+            </SignedIn>
+          </div>
         </div>
       </div>
     </nav>

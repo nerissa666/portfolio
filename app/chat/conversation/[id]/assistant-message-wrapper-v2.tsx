@@ -62,52 +62,21 @@ const AssistantMessageWrapperV2_Content = ({
   // that can occur when React tries to update the DOM during transitions
   const key = isLoading ? "loading" : "loaded";
 
-  if (isLoading) {
-    return (
-      <div className="flex items-start mb-4" key={key}>
-        <div className="w-8 h-8 rounded-full bg-blue-500 text-white flex-shrink-0 mr-3 flex items-center justify-center text-sm font-semibold">
-          AI
-        </div>
-        <div
-          className="relative max-w-[85%] p-[3px] rounded-lg overflow-hidden"
-          style={{
-            background: `
-            linear-gradient(
-              90deg, 
-              #ff0000, #ffa500, #ffff00, #008000, #0000ff, #4b0082, #ee82ee, #ff0000
-            )
-          `,
-            backgroundSize: "200% 100%",
-            animation: "rainbowBorder 2s linear infinite",
-          }}
-        >
-          <div className="relative bg-blue-50 p-3 rounded-lg">
-            <div className="prose">{children}</div>
-          </div>
-
-          {/* Inline styles for the animation */}
-          <style>{`
-            @keyframes rainbowBorder {
-              0% {
-                background-position: 0% 50%;
-              }
-              100% {
-                background-position: 200% 50%;
-              }
-            }
-          `}</style>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="flex items-start mb-4" key={key}>
-      <div className="w-8 h-8 rounded-full bg-blue-500 text-white flex-shrink-0 mr-3 flex items-center justify-center text-sm font-semibold">
-        AI
-      </div>
-      <div className="max-w-[85%] bg-blue-50 p-3 rounded-lg shadow-sm border-l-4 border-blue-300 hover:shadow-md transition-shadow duration-200">
-        <div className="prose">{children}</div>
+    <div className="mb-4 pb-2" key={key}>
+      <div className="border-l-2 border-blue-200 pl-4">
+        <div className="text-xs font-medium text-gray-500 mb-1.5">Response</div>
+        <div className="prose prose-gray max-w-none">
+          <div className="prose max-w-none">
+            {children}
+            {isLoading && (
+              <div className="mt-3 flex items-center space-x-2 text-gray-600">
+                <div className="h-2.5 w-2.5 border-2 border-gray-600 border-t-transparent rounded-full animate-spin" />
+                <span className="text-xs font-medium">Processing...</span>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

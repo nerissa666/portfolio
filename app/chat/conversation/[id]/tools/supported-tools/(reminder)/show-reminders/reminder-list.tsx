@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Reminder } from "@/app/db/redis";
+import { type Reminder } from "@/app/db/redis";
 import { deleteReminderAction } from "./reminder.action";
 
 interface ReminderListProps {

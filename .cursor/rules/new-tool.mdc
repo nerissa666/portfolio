@@ -1,0 +1,253 @@
+---
+description: generate new AI tools
+globs: 
+alwaysApply: false
+---
+# AI Tool Generation Guide
+
+This guide outlines the rules and patterns for creating new tools in the AI system.
+
+## Basic Structure
+
+Each tool must follow this basic structure:
+
+```typescript
+import { z } from "zod";
+import type { ExecuteFunction } from "../tools";
+
+// 1. Parameter Schema
+const paramsSchema = z.object({
+  // Define your parameters here
+});
+
+export type ParamsType = z.infer<typeof paramsSchema>;
+
+// 2. Tool Specifications
+export const specs = {
+  description: "Clear description of what the tool does",
+  parameters: paramsSchema,
+};
+
+// 3. Execute Function
+export const execute: ExecuteFunction<ParamsType> = ({
+  args,
+  completeToolCallRsc,
+  completeToolCallServerAction,
+}) => {
+  // Return React component
+};
+```
+
+## Implementation Guidelines
+
+### Parameter Validation
+
+- Use Zod for all parameter validation
+- Define clear, specific parameter types
+- Include default values where appropriate
+- Document parameter requirements in the schema
+
+### UI Components
+
+- Keep UI practical and focused on the tool's purpose
+- Use Tailwind CSS for styling
+- Include basic animations only if they enhance usability
+- Follow the existing dark theme (bg-gray-900, text-white, etc.)
+
+### Error Handling
+
+- Implement basic error handling for invalid parameters
+- Use try-catch blocks for async operations
+- Return meaningful error messages
+- Handle edge cases gracefully
+
+### State Management
+
+- Prefer `completeToolCallRsc` for server-side operations
+- Use `completeToolCallServerAction` only when client-side interaction is necessary
+- Always render the React node returned from either function
+
+Example:
+
+```typescript
+const result = await someOperation();
+const node = await completeToolCallRsc(result);
+return (
+  <>
+    {node}
+    <YourToolUI />
+  </>
+);
+```
+
+### Database Integration
+
+- Extend `redis.ts` for new database operations
+- Follow the existing pattern for data storage
+- Use appropriate Redis data structures
+
+Example:
+
+```typescript
+// In redis.ts
+export async function yourNewDatabaseFunction(): Promise<YourType> {
+  const userId = await getUserId();
+  // Implementation
+}
+
+// In your tool
+import { yourNewDatabaseFunction } from "@/app/db/redis";
+```
+
+### Documentation
+
+- Include JSDoc comments for the main functions
+- Document parameter types and requirements
+- Add usage examples in comments
+
+Example:
+
+```typescript
+/**
+ * Performs [tool action]
+ * @param args - The parameters for the tool
+ * @returns A React component displaying the result
+ * @example
+ * // Example usage
+ * const result = await tool.execute({ param1: "value" });
+ */
+```
+
+## File Organization
+
+### Directory Structure
+
+```
+app/chat/conversation/[id]/tools/supported-tools/
+├── category-name/
+│   └── tool-name/
+│       └── tool-name.tsx
+├── tools.tsx
+└── TOOL_GENERATION.md
+```
+
+### Tool Registration
+
+Add your tool to `tools.tsx`:
+
+```typescript
+import * as yourTool from "./category-name/tool-name/tool-name";
+
+export const TOOLS = {
+  // ... existing tools
+  yourTool: yourTool.specs,
+} as const;
+
+export const EXECUTE_TOOLS: Record<keyof typeof TOOLS, ExecuteFunction<any>> = {
+  // ... existing tools
+  yourTool: yourTool.execute,
+} as const;
+```
+
+## Best Practices
+
+1. **Focus and Purpose**
+
+   - Keep tools focused and single-purpose
+   - Make the purpose clear in the description
+   - Avoid overlapping functionality
+
+2. **Type Safety**
+
+   - Use TypeScript for all implementations
+   - Define proper types for all parameters
+   - Use type inference where possible
+
+3. **React Patterns**
+
+   - Follow React Server Components patterns
+   - Use proper component composition
+   - Implement error boundaries
+
+4. **Performance**
+
+   - Keep the UI responsive
+   - Optimize database queries
+   - Handle loading states properly
+
+5. **Security**
+   - Validate all user inputs
+   - Implement proper authentication checks
+   - Follow security best practices
+
+## Example Tool
+
+Here's a complete example of a simple tool:
+
+```typescript
+import { z } from "zod";
+import type { ExecuteFunction } from "../tools";
+
+const paramsSchema = z.object({
+  message: z.string().min(1).max(1000),
+});
+
+export type ParamsType = z.infer<typeof paramsSchema>;
+
+export const specs = {
+  description: "A tool to display a message to the user",
+  parameters: paramsSchema,
+};
+
+export const execute: ExecuteFunction<ParamsType> = ({
+  args,
+  completeToolCallRsc,
+}) => {
+  const { message } = args;
+
+  return (
+    <div className="p-4 border rounded-md bg-gray-900 shadow-md">
+      <p className="text-white">{message}</p>
+    </div>
+  );
+};
+```
+
+## Common Pitfalls to Avoid
+
+1. **State Management**
+
+   - Don't mix client and server state unnecessarily
+   - Use the appropriate completion function
+   - Always render the completion node
+
+2. **Error Handling**
+
+   - Don't swallow errors
+   - Provide meaningful error messages
+   - Handle all edge cases
+
+3. **UI Design**
+
+   - Don't overcomplicate the UI
+   - Keep animations subtle
+   - Follow the existing theme
+
+4. **Database Operations**
+   - Don't forget authentication checks
+   - Use appropriate Redis data structures
+   - Handle connection errors
+
+## Support
+
+For questions or issues:
+
+1. Check existing tools for patterns
+2. Review the Redis implementation
+3. Consult the team for guidance
+
+## Important Notes
+1. Ensure that your `execute` function calls `completeToolCallRsc` to store the results to a DB. You must create new DB stuff in [redis.ts](mdc:app/db/redis.ts) file.
+2. When creating a new tool, think about how it interacts with AI chatbot interface. Make an interaction example at the top of the tool as a comment.
+3. Ensure you use light mode.
+
