@@ -54,26 +54,49 @@ const TopNav = () => {
   return (
     <nav className="sticky top-0 border-b bg-gray-900 z-10 h-[60px]">
       <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-        <Link
-          href="/chat"
-          className="flex items-center gap-2 text-white hover:text-gray-300"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
+        <div className="flex items-center gap-4">
+          <Link
+            href="/chat"
+            className="flex items-center gap-2 text-white hover:text-gray-300"
           >
-            <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-            <polyline points="9 22 9 12 15 12 15 22" />
-          </svg>
-          <span className="font-medium">Home</span>
-        </Link>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+              <polyline points="9 22 9 12 15 12 15 22" />
+            </svg>
+            <span className="font-medium">Home</span>
+          </Link>
+          <Link
+            href="/chat/agent"
+            className="flex items-center gap-2 text-white hover:text-gray-300"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M12 2a8 8 0 0 0-8 8c0 1.892.402 3.13 1.5 4.5L12 22l6.5-7.5c1.098-1.37 1.5-2.608 1.5-4.5a8 8 0 0 0-8-8Z" />
+              <path d="M12 6v4" />
+              <path d="M12 14h.01" />
+            </svg>
+            <span className="font-medium">Agent</span>
+          </Link>
+        </div>
         <div className="flex items-center gap-4">
           <div className="text-white">
             <FontSizeControl />
