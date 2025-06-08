@@ -1,11 +1,18 @@
 import { z } from "zod";
-import Exa, { type SearchResult as ExaSearchResult } from "exa-js";
+import { tavily } from "@tavily/core";
 import { Suspense } from "react";
 import Collapsable from "@/app/components/collapsable.client";
 import { ExecuteFunction } from "../tools";
 
-// Initialize Exa client
-const exa = new Exa(process.env.EXA_AI_API_KEY);
+// Initialize Tavily client
+const tvly = tavily({ apiKey: process.env.TAVILY_API_KEY });
+
+interface TavilySearchResult {
+  title: string;
+  url: string;
+  content: string;
+  published_date?: string;
+}
 
 interface SearchResult {
   title: string;
@@ -35,19 +42,15 @@ export const execute: ExecuteFunction<ParamsType> = async ({
 }) => {
   try {
     const Component = async () => {
-      const { results } = await exa.searchAndContents(args.query, {
-        livecrawl: "always",
-        numResults: 10,
-      });
+      const searchResponse = await tvly.search(args.query, {});
+      const results = searchResponse.results as TavilySearchResult[];
 
       const searchResults: SearchResult[] = results.map(
-        (
-          result: ExaSearchResult<{ livecrawl: "always"; numResults: number }>
-        ) => ({
+        (result: TavilySearchResult) => ({
           title: result.title || "",
           url: result.url,
-          content: result.text.slice(0, 1500),
-          publishedDate: result.publishedDate,
+          content: result.content.slice(0, 1500),
+          publishedDate: result.published_date,
         })
       );
 
